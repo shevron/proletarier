@@ -3,7 +3,8 @@
 namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
-use Proletarier\Router;
+use Proletarier\RouteStack;
+use Zend\Mvc\Router\RouteInterface;
 
 class WorkerPool implements WorkerInterface
 {
@@ -14,7 +15,7 @@ class WorkerPool implements WorkerInterface
     protected $poolSize = 3;
 
     /**
-     * @var Router
+     * @var RouteInterface
      */
     protected $router;
 
@@ -36,11 +37,11 @@ class WorkerPool implements WorkerInterface
     /**
      * Set the router
      *
-     * @param Router $router
+     * @param RouteInterface $router
      *
      * @return $this
      */
-    public function setRouter(Router $router)
+    public function setRouter(RouteInterface $router)
     {
         $this->router = $router;
         return $this;
@@ -49,12 +50,12 @@ class WorkerPool implements WorkerInterface
     /**
      * Get the router object, or an empty Router object if not set
      *
-     * @return Router
+     * @return RouteInterface
      */
     public function getRouter()
     {
         if (! $this->router) {
-            $this->router = new Router();
+            $this->router = new RouteStack();
         }
         return $this->router;
     }

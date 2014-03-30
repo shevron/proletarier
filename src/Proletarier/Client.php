@@ -2,7 +2,7 @@
 
 namespace Proletarier;
 
-use Proletarier\Message\Request;
+use Proletarier\Message\RequestInterface;
 use ZMQContext;
 use ZMQSocket;
 use ZMQ;
@@ -28,12 +28,12 @@ class Client
     /**
      * Send request
      *
-     * @param Request $request
+     * @param RequestInterface $request
      */
-    public function send(Request $request)
+    public function send(RequestInterface $request)
     {
         $socket = $this->connect();
-        $socket->send($request->serialize());
+        $socket->send($request->toString());
     }
 
     /**

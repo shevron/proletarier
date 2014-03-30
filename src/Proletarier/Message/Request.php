@@ -2,81 +2,76 @@
 
 namespace Proletarier\Message;
 
-
-class Request extends AbstractMessage implements RequestInterface
+class Request extends \Zend\Stdlib\Request implements RequestInterface
 {
-    protected $action = null;
+    /**
+     * Action to perform
+     *
+     * @var string
+     */
+    protected $action;
 
-    public function __construct($action = null, $params = array())
-    {
-        $this->setAction($action);
-        $this->setParameters($params);
-    }
-
+    /**
+     * @param string $action
+     *
+     * @return $this
+     */
     public function setAction($action)
     {
         $this->action = $action;
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getAction()
     {
         return $this->action;
     }
 
     /**
-     * Serialize this message into a string
+     * Convert this request into a JSON-encoded string
      *
-     * @throws InvalidMessageException
      * @return string
      */
-    public function serialize()
+    public function toString()
     {
-        if (! $this->action) {
-            throw new InvalidMessageException("Request cannot be serialized, must contain an action");
-        }
-
         return json_encode(array(
-            'action' => $this->action,
-            'params' => $this->getParameters()
+            'action'   => $this->action,
+            'metadata' => $this->metadata,
+            'content'  => $this->content
         ));
     }
 
     /**
-     * Load a serialized string into this message object
+     * Convert a JSON-encoded string into a Request object
      *
-     * @param string $serialized
-     * @throws InvalidMessageException
-     * @return $this
-     */
-    public function unserialize($serialized)
-    {
-        $data = json_decode($serialized, true);
-        if (! is_array($data)) {
-            throw new InvalidMessageException("Invalid Request: doesn't seem to be a json-serialized object");
-        }
-
-        if (! (isset($data['action']) && isset($data['params']))) {
-            throw new InvalidMessageException("Invalid Request: action or params fields are missing");
-        }
-
-        $this->action = $data['action'];
-        $this->setParameters($data['params']);
-
-        return $this;
-    }
-
-    /**
-     * Create a request object from a string
+     * @param  string $string
      *
-     * @param $string
-     *
+     * @throws \InvalidArgumentException
      * @return Request
      */
     static public function fromString($string)
     {
-        $req = new static(); /* @var $req Request */
-        $req->unserialize($string);
+        $req = new Request();
+        $input = json_decode($string, true);
+        if (! ($input && is_array($input)))  {
+            throw new \InvalidArgumentException("Unable to parse json-encoded request or invalid request format");
+        }
+
+        if (isset($input['action'])) {
+            $req->setAction($input['action']);
+        }
+
+        if (isset($input['metadata'])) {
+            $req->setMetadata($input['metadata']);
+        }
+
+        if (isset($input['content'])) {
+            $req->setContent($input['content']);
+        }
+
         return $req;
     }
 }

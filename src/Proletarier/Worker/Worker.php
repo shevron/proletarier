@@ -4,7 +4,7 @@ namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
 use Proletarier\Message\Request;
-use Proletarier\Router;
+use Zend\Mvc\Router\RouteInterface;
 use ZMQContext;
 use ZMQSocket;
 use ZMQSocketException;
@@ -39,11 +39,11 @@ class Worker implements WorkerInterface
     /**
      * Set the router
      *
-     * @param Router $router
+     * @param RouteInterface $router
      *
      * @return $this
      */
-    public function setRouter(Router $router)
+    public function setRouter(RouteInterface $router)
     {
         $this->router = $router;
         return $this;
@@ -52,7 +52,7 @@ class Worker implements WorkerInterface
     /**
      * Get the router object
      *
-     * @return Router
+     * @return RouteInterface
      */
     public function getRouter()
     {
@@ -196,21 +196,32 @@ class Worker implements WorkerInterface
 
             try {
                 $string = $receiver->recv();
-                $this->getEventManager()->trigger("recv.read", $this, array('string' => $string));
+                $this->getEventManager()->trigger("recv.read", $this, array('payload' => $string));
             } catch (ZMQSocketException $ex) {
-                // This can mean we are shutting down, or an error occured
+                // This can mean we are shutting down, or an error occurred
+                // TODO: handle shutdowns more gracefully (not with an error)
                 $this->getEventManager()->trigger("recv.error", $this, array('exception' => $ex));
                 break;
             }
 
             try {
                 $request = Request::fromString($string);
-                $route = $this->getRouter()->match($request);
-                var_dump($route);
+                $routeMatch = $this->getRouter()->match($request);
+                if (! $routeMatch) {
+                    $this->getEventManager()->trigger('route.notfound', $this, array('request' => $request));
+                } else {
+                    $this->getEventManager()->trigger('route', $this, array('routeMatch' => $routeMatch,
+                                                                            'request' => $request));
+                    $this->getEventManager()->trigger("route.post", $this, array('routeMatch' => $routeMatch,
+                                                                                 'request' => $request));
+                }
 
             } catch (\Exception $ex) {
-                $this->getEventManager()->trigger("route.error", $this, array('exception' => $ex));
+                $this->getEventManager()->trigger("route.error", $this, array('exception' => $ex,
+                                                                              'request' => $request));
             }
+
+
         }
     }
 

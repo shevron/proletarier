@@ -2,23 +2,23 @@
 
 namespace Proletarier\Worker;
 
-use Proletarier\Router;
 use Zend\EventManager\EventManagerAwareInterface;
+use Zend\Mvc\Router\RouteInterface;
 
 interface WorkerInterface extends EventManagerAwareInterface
 {
     /**
      * Set the router
      *
-     * @param Router $router
+     * @param RouteInterface $router
      * @return $this
      */
-    public function setRouter(Router $router);
+    public function setRouter(RouteInterface $router);
 
     /**
      * Get the router object
      *
-     * @return Router
+     * @return RouteInterface
      */
     public function getRouter();
 
