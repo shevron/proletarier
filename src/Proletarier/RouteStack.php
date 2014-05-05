@@ -34,7 +34,7 @@ class RouteStack implements RouteInterface
             throw new \InvalidArgumentException("\$routes is expected to be an array or a Traversable object");
         }
 
-        foreach($routes as $name => $callable) {
+        foreach ($routes as $name => $callable) {
             $this->addRoute($name, $callable);
         }
     }
@@ -54,8 +54,8 @@ class RouteStack implements RouteInterface
     /**
      * Match a given request.
      *
-     * @param  Request $request
-     *
+     * @param \Proletarier\Message\Request|\Zend\Stdlib\RequestInterface $request
+     * @throws \InvalidArgumentException
      * @return RouteMatch
      */
     public function match(StdRequest $request)
