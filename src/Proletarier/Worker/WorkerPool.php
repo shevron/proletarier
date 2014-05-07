@@ -5,6 +5,7 @@ namespace Proletarier\Worker;
 use Proletarier\EventManagerAwareTrait;
 use Proletarier\RouteStack;
 use Zend\Mvc\Router\RouteInterface;
+use ZendTest\Loader\TestAsset\ServiceLocator;
 
 class WorkerPool implements WorkerInterface
 {
@@ -104,7 +105,7 @@ class WorkerPool implements WorkerInterface
     {
         while (! empty($this->workers)) {
             $exited = array();
-            foreach($this->workers as $pid => $worker) {
+            foreach ($this->workers as $pid => $worker) {
                 $status = $worker->wait(false);
                 if ($status !== null) {
                     $exited[] = $pid;
@@ -112,11 +113,13 @@ class WorkerPool implements WorkerInterface
                 }
             }
 
-            foreach($exited as $pid) {
+            foreach ($exited as $pid) {
                 unset($this->workers[$pid]);
             }
 
-            if (! $block) return;
+            if (! $block) {
+                return;
+            }
             if (! empty($this->workers)) {
                 usleep(10000);
             }
