@@ -29,13 +29,17 @@ return array(
 
     'service_manager' => array(
         'factories' => array(
-            'Proletarier\Broker'     => array('Proletarier\Broker', 'factory'),
+            'Proletarier\Broker'       => array('Proletarier\Broker', 'factory'),
+//            'Proletarier\Worker'       => array('Proletarier\Worker\Worker', 'factory'),
+            'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
+//            'Proletarier\Client'       => array('Proletarier\Client', 'factory'),
+            'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',
         ),
     ),
 
     'proletarier' => array(
-        'event_handlers' => array(
-            array('*', array('Proletarier\Handler\Default', 'log')),
+        'handlers' => array(
+            array('*', 'Proletarier\Handler\EventLogger'),
         ),
 
         'broker' => array(

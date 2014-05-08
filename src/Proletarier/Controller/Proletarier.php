@@ -20,7 +20,7 @@ class Proletarier extends AbstractActionController
 
         /* @var $broker \Proletarier\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
-        $workerPool = $this->createWorkerPool($config, $broker);
+        $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');
 
         $workerPool->launch();
         $broker->run();
@@ -29,32 +29,5 @@ class Proletarier extends AbstractActionController
         $result->setErrorLevel(0);
 
         return $result;
-    }
-
-    /**
-     * Create the worker pool
-     *
-     * @param array  $config
-     * @param Broker $broker
-     *
-     * @return WorkerPool
-     * @throws \ErrorException
-     */
-    private function createWorkerPool(array $config, Broker $broker)
-    {
-        if (! isset($config['proletarier'])) {
-            throw new \ErrorException("Configuration array is missing the 'proletarier' key");
-        }
-
-        $poolSize = $config['proletarier']['worker']['pool_size'];
-        $connect = $config['proletarier']['worker']['connect'];
-        if ($connect === null) {
-            $connect = $config['proletarier']['worker']['bind'];
-            if ($connect === null) {
-                $connect = $broker->getBackendAddress();
-            }
-        }
-
-        return new WorkerPool($connect, $poolSize);
     }
 }

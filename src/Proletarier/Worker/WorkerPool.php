@@ -5,7 +5,7 @@ namespace Proletarier\Worker;
 use Proletarier\EventManagerAwareTrait;
 use Proletarier\RouteStack;
 use Zend\Mvc\Router\RouteInterface;
-use ZendTest\Loader\TestAsset\ServiceLocator;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 class WorkerPool implements WorkerInterface
 {
@@ -62,7 +62,7 @@ class WorkerPool implements WorkerInterface
     }
 
     /**
-     * Start the worker. In most cases this would fork out a process and return the process ID
+     * Start the worker pool
      *
      * @return integer
      */
@@ -126,5 +126,30 @@ class WorkerPool implements WorkerInterface
         }
 
         $this->running = false;
+    }
+
+    /**
+     * @param ServiceLocatorInterface $locator
+     *
+     * @return WorkerPool
+     * @throws \ErrorException
+     */
+    public static function factory(ServiceLocatorInterface $locator)
+    {
+        $config = $locator->get('Config');
+        if (! isset($config['proletarier'])) {
+            throw new \ErrorException("Configuration array is missing the 'proletarier' key");
+        }
+
+        $poolSize = $config['proletarier']['worker']['pool_size'];
+        $connect = $config['proletarier']['worker']['connect'];
+        if ($connect === null) {
+            $connect = $config['proletarier']['worker']['bind'];
+            if ($connect === null) {
+                $connect = $locator->get('Proletarier\Broker')->getBackendAddress();
+            }
+        }
+
+        return new WorkerPool($connect, $poolSize);
     }
 }

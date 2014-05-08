@@ -153,6 +153,8 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
 
         /* @var $broker Broker */
         $broker = new static($config['proletarier']['broker']['bind'], $workerBind);
+        $broker->setEventManager($locator->get('Proletarier\EventManager'));
+
         return $broker;
     }
 }
