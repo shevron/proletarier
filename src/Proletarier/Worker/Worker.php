@@ -301,9 +301,13 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
     protected function hookSignalHandlers()
     {
         $worker = $this;
-        pcntl_signal(SIGTERM, function ($signal) use ($worker) {
+        $terminate = function ($signal) use ($worker) {
+            $worker->getEventManager()->trigger('worker.signal', $worker, array('signal' => $signal));
             $worker->shutdown();
-        });
+        };
+
+        pcntl_signal(SIGINT, $terminate);
+        pcntl_signal(SIGTERM, $terminate);
     }
 
     /**

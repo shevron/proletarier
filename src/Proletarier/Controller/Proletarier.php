@@ -2,7 +2,6 @@
 
 namespace Proletarier\Controller;
 
-use Proletarier\Broker;
 use Zend\Console\Request;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ConsoleModel;
@@ -29,7 +28,10 @@ class Proletarier extends AbstractActionController
         $workerPool->launch();
 
         $broker->run();
+
+        // Shut the workers down
         $workerPool->shutdown();
+        $workerPool->wait();
 
         $result = new ConsoleModel();
         $result->setErrorLevel(0);

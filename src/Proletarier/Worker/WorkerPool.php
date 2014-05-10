@@ -100,6 +100,7 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
         }
 
         $this->running = false;
+        $this->getEventManager()->trigger('workerpool.exit', $this);
     }
 
     /**
