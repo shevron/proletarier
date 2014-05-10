@@ -42,7 +42,8 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
     {
         $config = require __DIR__ . '/config/module.config.php';
         if (! $config['proletarier']['worker']['bind']) {
-            $config['proletarier']['worker']['bind'] = 'ipc://' . tempnam(sys_get_temp_dir(), 'proletarier_ipc_');
+            $config['proletarier']['worker']['bind'] = 'ipc://' . sys_get_temp_dir() . '/proletarier_ipc_' .
+                md5(microtime() . rand(0, PHP_INT_MAX)) . '.sock';
         }
 
         return $config;
