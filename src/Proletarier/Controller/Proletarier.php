@@ -56,6 +56,10 @@ class Proletarier extends AbstractActionController
             $params = json_decode($params, true);
         }
 
+        if (! $params) {
+            $params = array();
+        }
+
         var_dump($client->trigger($event, $params));
     }
 }
