@@ -4,6 +4,7 @@ namespace Proletarier\Worker;
 
 use Proletarier\Event;
 use Proletarier\EventManagerAwareTrait;
+use Zend\EventManager\ListenerAggregateInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\EventManager\EventManager;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
@@ -49,6 +50,8 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
      * Set event handlers
      *
      * @param array $handlers
+     *
+     * @throws \InvalidArgumentException
      */
     public function setHandlers(array $handlers)
     {
@@ -57,20 +60,33 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
         }
 
         foreach ($handlers as $handler) {
-            $event = $handler[0];
-            $callback = $handler[1];
-            if (isset($handler[3])) {
-                $priority = $handler[3];
+            if (is_array($handler)) {
+                $event = $handler[0];
+                $callback = $handler[1];
+                if (isset($handler[3])) {
+                    $priority = $handler[3];
+                } else {
+                    $priority = 1;
+                }
+
+                if (is_string($callback) && $this->getServiceLocator()->has($callback)) {
+                    // Assume callback is an invokable that can be fetched from the SM
+                    $callback = $this->getServiceLocator()->get($callback);
+                }
+
+                $this->appEventManager->attach($event, $callback, $priority);
+
+            } elseif (is_string($handler) && $this->getServiceLocator()->has($handler)) {
+                // Assume handler is a service implementing ListenerAggregateInterface
+                $listener = $this->getServiceLocator()->has($handler);
+                if ($listener instanceof ListenerAggregateInterface) {
+                    $this->appEventManager->attach($listener);
+                } else {
+                    throw new \InvalidArgumentException("Invalid handler or listener provided: '$handler'");
+                }
             } else {
-                $priority = 1;
+                throw new \InvalidArgumentException("Invalid handler or listener provided: '$handler'");
             }
-
-            if (is_string($callback) && $this->getServiceLocator()->has($callback)) {
-                // Assume callback is an invokable that can be fetched from the SM
-                $callback = $this->getServiceLocator()->get($callback);
-            }
-
-            $this->appEventManager->attach($event, $callback, $priority);
         }
     }
 
