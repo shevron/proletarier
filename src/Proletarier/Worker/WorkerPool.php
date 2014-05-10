@@ -3,11 +3,10 @@
 namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
-use Proletarier\RouteStack;
-use Zend\Mvc\Router\RouteInterface;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class WorkerPool implements WorkerInterface
+class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
 {
     use EventManagerAwareTrait;
 
@@ -15,14 +14,13 @@ class WorkerPool implements WorkerInterface
 
     protected $poolSize = 3;
 
-    /**
-     * @var RouteInterface
-     */
-    protected $router;
-
     protected $running  = false;
 
     protected $shutdown = false;
+
+    protected $locator;
+
+    protected $workerProto;
 
     /**
      * @var Worker[]
@@ -36,32 +34,6 @@ class WorkerPool implements WorkerInterface
     }
 
     /**
-     * Set the router
-     *
-     * @param RouteInterface $router
-     *
-     * @return $this
-     */
-    public function setRouter(RouteInterface $router)
-    {
-        $this->router = $router;
-        return $this;
-    }
-
-    /**
-     * Get the router object, or an empty Router object if not set
-     *
-     * @return RouteInterface
-     */
-    public function getRouter()
-    {
-        if (! $this->router) {
-            $this->router = new RouteStack();
-        }
-        return $this->router;
-    }
-
-    /**
      * Start the worker pool
      *
      * @return integer
@@ -72,10 +44,11 @@ class WorkerPool implements WorkerInterface
             return;
         }
 
+        $this->getEventManager()->trigger('workerpool.launch', $this);
         for ($i = 0; $i < $this->poolSize; $i++) {
-            $w = new Worker($this->connect);
+            $w = $this->createNewWorker();
             $w->setEventManager($this->getEventManager());
-            $w->setRouter($this->getRouter());
+
             $pid = $w->launch();
             $this->workers[$pid] = $w;
         }
@@ -93,7 +66,7 @@ class WorkerPool implements WorkerInterface
         $this->shutdown = true;
 
         // Signal all workers to shut down
-        foreach($this->workers as $pid => $worker) {
+        foreach ($this->workers as $worker) {
             $worker->shutdown();
         }
     }
@@ -103,13 +76,14 @@ class WorkerPool implements WorkerInterface
      */
     public function wait($block = true)
     {
+        $this->getEventManager()->trigger('workerpool.waiting', $this);
         while (! empty($this->workers)) {
             $exited = array();
             foreach ($this->workers as $pid => $worker) {
                 $status = $worker->wait(false);
                 if ($status !== null) {
                     $exited[] = $pid;
-                    $this->getEventManager()->trigger('worker.exited', $this, array($worker));
+                    $this->getEventManager()->trigger('workerpool.worker-exited', $this, array($worker));
                 }
             }
 
@@ -129,6 +103,42 @@ class WorkerPool implements WorkerInterface
     }
 
     /**
+     * Set service locator
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return $this
+     */
+    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+    {
+        $this->locator = $serviceLocator;
+        return $this;
+    }
+
+    /**
+     * Get service locator
+     *
+     * @return ServiceLocatorInterface
+     */
+    public function getServiceLocator()
+    {
+        return $this->locator;
+    }
+
+    /**
+     * Create a new worker
+     *
+     * @return Worker
+     */
+    protected function createNewWorker()
+    {
+        if ($this->workerProto) {
+            return clone $this->workerProto;
+        } else {
+            return new Worker($this->connect);
+        }
+    }
+
+    /**
      * @param ServiceLocatorInterface $locator
      *
      * @return WorkerPool
@@ -145,11 +155,11 @@ class WorkerPool implements WorkerInterface
         $connect = $config['proletarier']['worker']['connect'];
         if ($connect === null) {
             $connect = $config['proletarier']['worker']['bind'];
-            if ($connect === null) {
-                $connect = $locator->get('Proletarier\Broker')->getBackendAddress();
-            }
         }
 
-        return new WorkerPool($connect, $poolSize);
+        $pool = new WorkerPool($connect, $poolSize);
+        $pool->workerProto = $locator->get('Proletarier\Worker');
+
+        return $pool;
     }
 }

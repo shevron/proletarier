@@ -146,14 +146,8 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
             throw new \ErrorException("Configuration is missing the 'proletarier' key");
         }
 
-        $workerBind = $config['proletarier']['worker']['bind'];
-        if (! $workerBind) {
-            $workerBind = 'ipc://' . tempnam(sys_get_temp_dir(), 'proletarier_ipc_');
-        }
-
         /* @var $broker Broker */
-        $broker = new static($config['proletarier']['broker']['bind'], $workerBind);
-        $broker->setEventManager($locator->get('Proletarier\EventManager'));
+        $broker = new static($config['proletarier']['broker']['bind'], $config['proletarier']['worker']['bind']);
 
         return $broker;
     }

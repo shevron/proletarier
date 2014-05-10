@@ -4,13 +4,15 @@ namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
 use Proletarier\Message\Request;
-use Zend\Mvc\Router\RouteInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\EventManager\EventManager;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use ZMQContext;
 use ZMQSocket;
 use ZMQSocketException;
 use ZMQ;
 
-class Worker implements WorkerInterface
+class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 {
     /**
      * Glue in event manager awareness
@@ -19,13 +21,15 @@ class Worker implements WorkerInterface
 
     protected $connect;
 
-    protected $router;
-
     protected $running = false;
 
     protected $shutdown = false;
 
     protected $pid;
+
+    protected $locator;
+
+    protected $internalEventManager;
 
     public function __construct($connect)
     {
@@ -36,27 +40,28 @@ class Worker implements WorkerInterface
         $this->connect = $connect;
     }
 
-    /**
-     * Set the router
-     *
-     * @param RouteInterface $router
-     *
-     * @return $this
-     */
-    public function setRouter(RouteInterface $router)
+    public function setHandlers(array $handlers)
     {
-        $this->router = $router;
-        return $this;
-    }
+        if (! $this->internalEventManager) {
+            $this->internalEventManager = new EventManager();
+        }
 
-    /**
-     * Get the router object
-     *
-     * @return RouteInterface
-     */
-    public function getRouter()
-    {
-        return $this->router;
+        foreach ($handlers as $handler) {
+            $event = $handler[0];
+            $callback = $handler[1];
+            if (isset($handler[3])) {
+                $priority = $handler[3];
+            } else {
+                $priority = 1;
+            }
+
+            if (is_string($callback) && $this->getServiceLocator()->has($callback)) {
+                // Assume callback is an invokable that can be fetched from the SM
+                $callback = $this->getServiceLocator()->get($callback);
+            }
+
+            $this->internalEventManager->attach($event, $callback, $priority);
+        }
     }
 
     /**
@@ -77,19 +82,28 @@ class Worker implements WorkerInterface
             $this->pid = $pid;
             return $pid;
         } else {
+            $this->configure();
             $this->hookSignalHandlers();
+            $this->getEventManager()->trigger('worker.launch', $this);
             $this->mainLoop();
             // For now this is the safest way to make sure nothing gets
             // executed again inside the child process
-            $this->getEventManager()->trigger('exit', $this);
+            $this->getEventManager()->trigger('worker.exit', $this);
             exit(0);
         }
     }
 
+    /**
+     * Tell if the worker is currently running
+     *
+     * @return bool
+     */
     public function isRunning()
     {
-        // If in
-        if (! $this->pid) return $this->running;
+        // If in child process
+        if (! $this->pid) {
+            return $this->running;
+        }
 
         // Check if process is still up (doesn't really send a kill signal)
         if (posix_kill($this->pid, 0)) {
@@ -101,12 +115,24 @@ class Worker implements WorkerInterface
         return $this->running;
     }
 
+    /**
+     * Get the worker process exit status (0 = normal)
+     *
+     * @return int
+     */
     public function getExitStatus()
     {
-        if (! $this->pid) return;
+        if (! $this->pid) {
+            return;
+        }
+
         $status = null;
         $pid = pcntl_waitpid($this->pid, $status, WNOHANG);
-        if ($pid == -1) return;
+
+        if ($pid == -1) {
+            return;
+        }
+
         return pcntl_wexitstatus($status);
     }
 
@@ -135,7 +161,10 @@ class Worker implements WorkerInterface
     {
         declare(ticks=1);
 
-        if (! $this->pid) return;
+        if (! $this->pid) {
+            return;
+        }
+
         if ($block) {
             // Block until process exits
             $pid = pcntl_waitpid($this->pid, $status);
@@ -160,7 +189,7 @@ class Worker implements WorkerInterface
     /**
      * Shut the worker down.
      *
-     * @return mixed
+     * @return $this
      */
     public function shutdown()
     {
@@ -172,10 +201,32 @@ class Worker implements WorkerInterface
             }
         } else {
             // Worker signaled to shutdown
-            $this->getEventManager()->trigger(__FUNCTION__, $this);
+            $this->getEventManager()->trigger('worker.shutdown', $this);
         }
 
         return $this;
+    }
+
+    /**
+     * Set service locator
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return $this
+     */
+    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+    {
+        $this->locator = $serviceLocator;
+        return $this;
+    }
+
+    /**
+     * Get service locator
+     *
+     * @return ServiceLocatorInterface
+     */
+    public function getServiceLocator()
+    {
+        return $this->locator;
     }
 
     /**
@@ -206,7 +257,7 @@ class Worker implements WorkerInterface
 
             try {
                 $request = Request::fromString($string);
-                $routeMatch = $this->getRouter()->match($request);
+                $this->internalEventManager->trigger($request->getAction(), $this, $request->getContent());
                 if (! $routeMatch) {
                     $this->getEventManager()->trigger('route.notfound', $this, array('request' => $request));
                 } else {
@@ -225,11 +276,52 @@ class Worker implements WorkerInterface
         }
     }
 
+    /**
+     * Configure worker. This is called after forking a new process.
+     *
+     */
+    protected function configure()
+    {
+        $config = $this->getServiceLocator()->get('Config');
+        $config = $config['proletarier'];
+        $handlers = $config['handlers'];
+        $this->setHandlers($handlers);
+    }
+
+    /**
+     * Hook POSIX signal handlers for the forked worker process
+     *
+     */
     protected function hookSignalHandlers()
     {
         $worker = $this;
-        pcntl_signal(SIGTERM, function($signal) use ($worker) {
+        pcntl_signal(SIGTERM, function ($signal) use ($worker) {
             $worker->shutdown();
         });
+    }
+
+    /**
+     * Create a new Worker object form ServiceLocator
+     *
+     * @param ServiceLocatorInterface $locator
+     *
+     * @return Worker
+     * @throws \ErrorException
+     */
+    public static function factory(ServiceLocatorInterface $locator)
+    {
+        $config = $locator->get('Config');
+        if (! isset($config['proletarier'])) {
+            throw new \ErrorException("Configuration array is missing the 'proletarier' key");
+        }
+        $config = $config['proletarier'];
+
+        $connect = $config['worker']['connect'];
+        if ($connect === null) {
+            $connect = $config['worker']['bind'];
+        }
+
+        $worker = new Worker($connect);
+        return $worker;
     }
 }
