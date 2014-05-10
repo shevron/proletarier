@@ -5,6 +5,27 @@
  */
 
 return array(
+
+    'proletarier' => array(
+        'handlers' => array(
+            array('*', 'Proletarier\Handler\EventLogger'),
+        ),
+
+        'client' => array(
+            'connect' => null,
+        ),
+
+        'broker' => array(
+            'bind'    => 'tcp://127.0.0.1:9105',
+        ),
+
+        'worker' => array(
+            'pool_size' => 5,
+            'bind'      => null,
+            'connect'   => null,
+        ),
+    ),
+
     'console' => array(
         'router' => array(
             'routes' => array(
@@ -13,10 +34,20 @@ return array(
                         'route' => 'proletarier run',
                         'defaults' => array(
                             'controller' => 'proletarier',
-                            'action' => 'run'
+                            'action'     => 'run'
                         )
                     )
-                )
+                ),
+
+                'proletarier-trigger' => array(
+                    'options' => array(
+                        'route' => 'proletarier trigger <event> [<params>]',
+                        'defaults' => array(
+                            'controller' => 'proletarier',
+                            'action'     => 'trigger'
+                        )
+                    )
+                ),
             )
         )
     ),
@@ -42,26 +73,6 @@ return array(
 
         'invokables' => array(
             'Proletarier\Handler\EventLogger',
-        ),
-    ),
-
-    'proletarier' => array(
-        'handlers' => array(
-            array('*', 'Proletarier\Handler\EventLogger'),
-        ),
-
-        'client' => array(
-            'connect' => null,
-        ),
-
-        'broker' => array(
-            'bind'    => 'tcp://127.0.0.1:9105',
-        ),
-
-        'worker' => array(
-            'pool_size' => 5,
-            'bind'      => null,
-            'connect'   => null,
         ),
     ),
 

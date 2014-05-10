@@ -20,5 +20,4 @@ interface WorkerInterface extends EventManagerAwareInterface
      * @return mixed
      */
     public function shutdown();
-
 }

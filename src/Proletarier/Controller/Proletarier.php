@@ -38,4 +38,24 @@ class Proletarier extends AbstractActionController
 
         return $result;
     }
+
+    public function triggerAction()
+    {
+        // Only work for console requests
+        if (! $this->getRequest() instanceof Request) {
+            return;
+        }
+
+        /* @var $client \Proletarier\Client */
+        $client = $this->getServiceLocator()->get('Proletarier\Client');
+
+        $event = $this->getRequest()->getParam('event');
+        $params = $this->getRequest()->getParam('params');
+
+        if ($params) {
+            $params = json_decode($params, true);
+        }
+
+        var_dump($client->trigger($event, $params));
+    }
 }
