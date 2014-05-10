@@ -23,7 +23,7 @@
     "require": {
         "php": ">=5.4",
         "ext-pcntl": "*",
-        "ext-zmq": ">=1.1",
+        "ext-zmq": "*",
         "zendframework/zendframework": ">=2.2.0"
     }
 }
