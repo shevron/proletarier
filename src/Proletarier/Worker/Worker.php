@@ -2,8 +2,8 @@
 
 namespace Proletarier\Worker;
 
+use Proletarier\Event;
 use Proletarier\EventManagerAwareTrait;
-use Proletarier\Message\Request;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\EventManager\EventManager;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
@@ -29,7 +29,12 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 
     protected $locator;
 
-    protected $internalEventManager;
+    /**
+     * Event manager used for application events
+     *
+     * @var EventManager
+     */
+    protected $appEventManager;
 
     public function __construct($connect)
     {
@@ -40,10 +45,15 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
         $this->connect = $connect;
     }
 
+    /**
+     * Set event handlers
+     *
+     * @param array $handlers
+     */
     public function setHandlers(array $handlers)
     {
-        if (! $this->internalEventManager) {
-            $this->internalEventManager = new EventManager();
+        if (! $this->appEventManager) {
+            $this->appEventManager = new EventManager();
         }
 
         foreach ($handlers as $handler) {
@@ -60,7 +70,7 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
                 $callback = $this->getServiceLocator()->get($callback);
             }
 
-            $this->internalEventManager->attach($event, $callback, $priority);
+            $this->appEventManager->attach($event, $callback, $priority);
         }
     }
 
@@ -259,20 +269,14 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 
             if ($payload) {
                 try {
-                    $request = Request::fromString($payload);
-                    $this->internalEventManager->trigger($request->getAction(), $this, $request->getContent());
-                    if (! $routeMatch) {
-                        $this->getEventManager()->trigger('route.notfound', $this, array('request' => $request));
-                    } else {
-                        $this->getEventManager()->trigger('route', $this, array('routeMatch' => $routeMatch,
-                                                                                'request' => $request));
-                        $this->getEventManager()->trigger("route.post", $this, array('routeMatch' => $routeMatch,
-                                                                                     'request' => $request));
-                    }
-
+                    $event = Event::fromJson($payload);
+                    $result = $this->appEventManager->trigger($event, $this);
+                    $this->getEventManager()->trigger('worker.result', $this, array('result' => $result));
+                } catch (\InvalidArgumentException $ex) {
+                    // Invalid message
+                    $this->getEventManager()->trigger("worker.error", $this, array('exception' => $ex));
                 } catch (\Exception $ex) {
-                    $this->getEventManager()->trigger("route.error", $this, array('exception' => $ex,
-                                                                                  'request' => $request));
+                    $this->getEventManager()->trigger("worker.error", $this, array('exception' => $ex));
                 }
             }
         }

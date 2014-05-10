@@ -2,7 +2,7 @@
 
 namespace Proletarier;
 
-use Proletarier\Message\RequestInterface;
+use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use ZMQContext;
 use ZMQSocket;
@@ -10,8 +10,6 @@ use ZMQ;
 
 class Client
 {
-    use EventManagerAwareTrait;
-
     /**
      * @var $string string Connection address
      */
@@ -27,14 +25,30 @@ class Client
     }
 
     /**
-     * Send request
+     * Trigger an asynchronous event
      *
-     * @param RequestInterface $request
+     * @param EventInterface | string $event
+     * @param array                   $params
+     *
+     * @throws \InvalidArgumentException
      */
-    public function send(RequestInterface $request)
+    public function trigger($event, array $params = array())
     {
         $socket = $this->connect();
-        $socket->send($request->toString());
+
+        if (is_string($event)) {
+            $event = new Event($event);
+        }
+
+        if (! $event instanceof EventInterface) {
+            throw new \InvalidArgumentException("Expecting either a string or an EventInterface");
+        }
+
+        if (! empty($params)) {
+            $event->setParams($params);
+        }
+
+        $socket->send(Event::toJson($event));
     }
 
     /**
