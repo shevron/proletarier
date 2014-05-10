@@ -7,7 +7,7 @@
 return array(
 
     'proletarier' => array(
-        'handlers' => array(
+        'listeners' => array(
             array('*', 'Proletarier\Handler\EventLogger'),
         ),
 

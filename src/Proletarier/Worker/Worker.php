@@ -47,24 +47,24 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
     }
 
     /**
-     * Set event handlers
+     * Attach event listeners
      *
-     * @param array $handlers
+     * @param array $listeners
      *
      * @throws \InvalidArgumentException
      */
-    public function setHandlers(array $handlers)
+    public function attachListeners(array $listeners)
     {
         if (! $this->appEventManager) {
             $this->appEventManager = new EventManager();
         }
 
-        foreach ($handlers as $handler) {
-            if (is_array($handler)) {
-                $event = $handler[0];
-                $callback = $handler[1];
-                if (isset($handler[3])) {
-                    $priority = $handler[3];
+        foreach ($listeners as $listenerSpec) {
+            if (is_array($listenerSpec)) {
+                $event = $listenerSpec[0];
+                $callback = $listenerSpec[1];
+                if (isset($listenerSpec[3])) {
+                    $priority = $listenerSpec[3];
                 } else {
                     $priority = 1;
                 }
@@ -76,16 +76,16 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 
                 $this->appEventManager->attach($event, $callback, $priority);
 
-            } elseif (is_string($handler) && $this->getServiceLocator()->has($handler)) {
-                // Assume handler is a service implementing ListenerAggregateInterface
-                $listener = $this->getServiceLocator()->has($handler);
+            } elseif (is_string($listenerSpec) && $this->getServiceLocator()->has($listenerSpec)) {
+                // Assume listener is a service implementing ListenerAggregateInterface
+                $listener = $this->getServiceLocator()->has($listenerSpec);
                 if ($listener instanceof ListenerAggregateInterface) {
                     $this->appEventManager->attach($listener);
                 } else {
-                    throw new \InvalidArgumentException("Invalid handler or listener provided: '$handler'");
+                    throw new \InvalidArgumentException("Invalid listener provided: '$listenerSpec'");
                 }
             } else {
-                throw new \InvalidArgumentException("Invalid handler or listener provided: '$handler'");
+                throw new \InvalidArgumentException("Invalid listener provided: '$listenerSpec'");
             }
         }
     }
@@ -316,8 +316,8 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
     {
         $config = $this->getServiceLocator()->get('Config');
         $config = $config['proletarier'];
-        $handlers = $config['handlers'];
-        $this->setHandlers($handlers);
+        $listeners = $config['listeners'];
+        $this->attachListeners($listeners);
     }
 
     /**
