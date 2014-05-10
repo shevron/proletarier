@@ -39,6 +39,10 @@ class Proletarier extends AbstractActionController
         return $result;
     }
 
+    /**
+     * Trigger an event - used as a Proletarier client, mainly for testing purposes
+     *
+     */
     public function triggerAction()
     {
         // Only work for console requests

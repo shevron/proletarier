@@ -65,7 +65,7 @@ class LoggingListener implements ListenerAggregateInterface
 
             case 'worker.read':
                 $bytes = strlen($e->getParam('payload'));
-                $this->log->debug("Worker process read message $bytes bytes long");
+                $this->log->debug("Worker process read message $bytes bytes long: {$e->getParam('payload')}");
                 break;
 
             default:
