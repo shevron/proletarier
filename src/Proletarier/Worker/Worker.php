@@ -79,7 +79,7 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 
             } elseif (is_string($listenerSpec) && $this->getServiceLocator()->has($listenerSpec)) {
                 // Assume listener is a service implementing ListenerAggregateInterface
-                $listener = $this->getServiceLocator()->has($listenerSpec);
+                $listener = $this->getServiceLocator()->get($listenerSpec);
                 if ($listener instanceof ListenerAggregateInterface) {
                     $this->appEventManager->attach($listener);
                 } else {
