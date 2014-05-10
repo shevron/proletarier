@@ -7,9 +7,7 @@
 return array(
 
     'proletarier' => array(
-        'listeners' => array(
-            array('*', 'Proletarier\Handler\EventLogger'),
-        ),
+        'listeners' => array(),
 
         'client' => array(
             'connect' => null,
@@ -87,7 +85,7 @@ return array(
                             'priority' => array(
                                 'name' => 'priority',
                                 'options' => array(
-                                    'priority' => \Zend\Log\Logger::DEBUG
+                                    'priority' => \Zend\Log\Logger::INFO
                                 )
                             ),
                         ),
