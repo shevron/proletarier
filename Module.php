@@ -18,6 +18,17 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
         $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
 
         $eventManager->attach('*', $serviceManager->get('Proletarier\Handler\EventLogger'), -1000);
+
+        // If we can (PHP 5.5 +), set the process title of workers after they launch
+        if (function_exists('cli_set_process_title')) {
+            $eventManager->attach('workerpoo.launch', function ($e) {
+                cli_set_process_title('Proletarier master');
+            });
+
+            $eventManager->attach('worker.launch', function ($e) {
+                cli_set_process_title('Proletarier worker');
+            });
+        }
     }
 
     /**
