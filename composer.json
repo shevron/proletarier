@@ -1,0 +1,29 @@
+{
+    "name": "shevron/proletarier",
+    "description": "An asynchronous event handler module for Zend Framework 2 apps based on ØMQ",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/shevron/proletarier",
+    "keywords": [
+        "zf2", "zeromq", "zmq", "asynchronous", "async", "processing",
+        "queue", "zend-framework", "background"
+    ],
+    "authors": [
+        {
+            "name": "Shahar Evron",
+            "email": "shahar.evron@gmail.com",
+            "homepage": "http://arr.gr/",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Proletarier\\": ["src/Proletarier", ""]
+        }
+    },
+    "require": {
+        "php": ">=5.4",
+        "ext-pcntl": "*",
+        "ext-zmq": ">=1.1",
+        "zendframework/zendframework": ">=2.2.0"
+    }
+}
