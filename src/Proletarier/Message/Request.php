@@ -52,11 +52,11 @@ class Request extends \Zend\Stdlib\Request implements RequestInterface
      * @throws \InvalidArgumentException
      * @return Request
      */
-    static public function fromString($string)
+    public static function fromString($string)
     {
         $req = new Request();
         $input = json_decode($string, true);
-        if (! ($input && is_array($input)))  {
+        if (! ($input && is_array($input))) {
             throw new \InvalidArgumentException("Unable to parse json-encoded request or invalid request format");
         }
 

@@ -3,6 +3,7 @@
 namespace Proletarier;
 
 use Proletarier\Message\RequestInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 use ZMQContext;
 use ZMQSocket;
 use ZMQ;
@@ -52,5 +53,29 @@ class Client
         }
 
         return $this->socket;
+    }
+
+    /**
+     * @param ServiceLocatorInterface $locator
+     *
+     * @return Client
+     * @throws \ErrorException
+     */
+    public static function factory(ServiceLocatorInterface $locator)
+    {
+        $config = $locator->get('Config');
+        if (! isset($config['proletarier'])) {
+            throw new \ErrorException("Configuration is missing the 'proletarier' key");
+        }
+
+        $connect = $config['proletarier']['client']['connect'];
+        if (! $connect) {
+            // Fall back: connect to the broker bind address
+            $connect = $config['proletarier']['broker']['bind'];
+        }
+
+        /* @var $client Client */
+        $client = new static($connect);
+        return $client;
     }
 }

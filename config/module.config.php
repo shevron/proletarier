@@ -32,7 +32,7 @@ return array(
             'Proletarier\Broker'       => array('Proletarier\Broker', 'factory'),
             'Proletarier\Worker'       => array('Proletarier\Worker\Worker', 'factory'),
             'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
-//            'Proletarier\Client'       => array('Proletarier\Client', 'factory'),
+            'Proletarier\Client'       => array('Proletarier\Client', 'factory'),
             'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',
         ),
 
@@ -50,9 +50,12 @@ return array(
             array('*', 'Proletarier\Handler\EventLogger'),
         ),
 
+        'client' => array(
+            'connect' => null,
+        ),
+
         'broker' => array(
             'bind'    => 'tcp://127.0.0.1:9105',
-            'connect' => null,
         ),
 
         'worker' => array(
@@ -60,7 +63,6 @@ return array(
             'bind'      => null,
             'connect'   => null,
         ),
-    )
     ),
 
     'log' => array(
