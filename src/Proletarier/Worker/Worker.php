@@ -280,7 +280,7 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
             if ($payload) {
                 try {
                     $event = Event::fromJson($payload);
-                    $result = $this->appEventManager->trigger($event, $this);
+                    $result = $this->appEventManager->trigger($event);
                     $this->getEventManager()->trigger('worker.result', $this, array('result' => $result));
                 } catch (\InvalidArgumentException $ex) {
                     // Invalid message
