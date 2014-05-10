@@ -3,7 +3,7 @@
 namespace Proletarier\Controller;
 
 use Proletarier\Broker;
-use Proletarier\Worker\WorkerPool;
+use Zend\Console\Request;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ConsoleModel;
 
@@ -16,14 +16,20 @@ class Proletarier extends AbstractActionController
      */
     public function runAction()
     {
-        $config = $this->getServiceLocator()->get('Config');
+        // Only work for console requests
+        if (! $this->getRequest() instanceof Request) {
+            return;
+        }
 
         /* @var $broker \Proletarier\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
-        $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');
 
+        /* @var $workerPool \Proletarier\Worker\WorkerPool */
+        $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');
         $workerPool->launch();
+
         $broker->run();
+        $workerPool->shutdown();
 
         $result = new ConsoleModel();
         $result->setErrorLevel(0);

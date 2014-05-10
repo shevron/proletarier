@@ -16,7 +16,7 @@ class EventLogger extends AbstractHandler
     public function __invoke(Event $event)
     {
         /* @var $logger \Zend\Log\Logger */
-        $logger = $this->getServiceLocator()->get('Proletarier\Log');
-        $logger->debug($event->getName());
+        $log = $this->getServiceLocator()->get('Proletarier\Log');
+        $log->debug("Proletarier event: " . $event->getName());
     }
 }

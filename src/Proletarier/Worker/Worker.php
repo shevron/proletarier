@@ -244,35 +244,37 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
         $receiver->connect($this->connect);
 
         while (! $this->shutdown) {
-
+            $payload = null;
             try {
-                $string = $receiver->recv();
-                $this->getEventManager()->trigger("recv.read", $this, array('payload' => $string));
+                $payload = $receiver->recv();
+                $this->getEventManager()->trigger("recv.read", $this, array('payload' => $payload));
             } catch (ZMQSocketException $ex) {
                 // This can mean we are shutting down, or an error occurred
-                // TODO: handle shutdowns more gracefully (not with an error)
-                $this->getEventManager()->trigger("recv.error", $this, array('exception' => $ex));
-                break;
-            }
-
-            try {
-                $request = Request::fromString($string);
-                $this->internalEventManager->trigger($request->getAction(), $this, $request->getContent());
-                if (! $routeMatch) {
-                    $this->getEventManager()->trigger('route.notfound', $this, array('request' => $request));
+                if ($ex->getCode() == 4) {
+                    $this->shutdown();
                 } else {
-                    $this->getEventManager()->trigger('route', $this, array('routeMatch' => $routeMatch,
-                                                                            'request' => $request));
-                    $this->getEventManager()->trigger("route.post", $this, array('routeMatch' => $routeMatch,
-                                                                                 'request' => $request));
+                    $this->getEventManager()->trigger("recv.error", $this, array('exception' => $ex->getMessage()));
                 }
-
-            } catch (\Exception $ex) {
-                $this->getEventManager()->trigger("route.error", $this, array('exception' => $ex,
-                                                                              'request' => $request));
             }
 
+            if ($payload) {
+                try {
+                    $request = Request::fromString($payload);
+                    $this->internalEventManager->trigger($request->getAction(), $this, $request->getContent());
+                    if (! $routeMatch) {
+                        $this->getEventManager()->trigger('route.notfound', $this, array('request' => $request));
+                    } else {
+                        $this->getEventManager()->trigger('route', $this, array('routeMatch' => $routeMatch,
+                                                                                'request' => $request));
+                        $this->getEventManager()->trigger("route.post", $this, array('routeMatch' => $routeMatch,
+                                                                                     'request' => $request));
+                    }
 
+                } catch (\Exception $ex) {
+                    $this->getEventManager()->trigger("route.error", $this, array('exception' => $ex,
+                                                                                  'request' => $request));
+                }
+            }
         }
     }
 

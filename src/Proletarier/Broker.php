@@ -10,6 +10,7 @@ use ZMQ;
 use ZMQContext;
 use ZMQSocket;
 use ZMQDevice;
+use ZMQDeviceException;
 
 class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
 {
@@ -76,7 +77,7 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
      */
     public function run()
     {
-        $this->getEventManager()->trigger(__FUNCTION__ . '.pre', $this);
+        $this->getEventManager()->trigger('broker.run.pre', $this);
 
         $context = new ZMQContext();
 
@@ -91,13 +92,20 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
                    ->setIdleCallback(array($this, 'idle'));
         }
 
-        $this->getEventManager()->trigger(__FUNCTION__, $this);
+        $this->hookShutdownSignals();
+        $this->getEventManager()->trigger('broker.run', $this);
 
-        // This should block forever
-        $device->run();
-
-        // Not sure this is ever called?
-        $this->getEventManager()->trigger(__FUNCTION__ . '.post', $this);
+        try {
+            // This blocks until interrupted
+            $device->run();
+        } catch (ZMQDeviceException $e) {
+            if ($e->getCode() == 4) {
+                // Interrupt
+                $this->getEventManager()->trigger('broker.run.post', $this);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -108,7 +116,7 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
      */
     public function idle()
     {
-        $this->getEventManager()->trigger(__FUNCTION__, $this);
+        $this->getEventManager()->trigger('broker.idle', $this);
     }
 
     /**
@@ -131,6 +139,20 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
     public function getServiceLocator()
     {
         return $this->locator;
+    }
+
+    /**
+     * Hook posix shutdown signal handlers
+     *
+     */
+    protected function hookShutdownSignals()
+    {
+        $terminate = function ($signal) {
+            $this->getEventManager()->trigger('broker.signal', $this, array('signal' => $signal));
+        };
+
+        pcntl_signal(SIGTERM, $terminate);
+        pcntl_signal(SIGINT, $terminate);
     }
 
     /**
