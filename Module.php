@@ -17,7 +17,7 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
         $serviceManager = $e->getTarget()->getServiceManager();
         $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
 
-        $eventManager->attach('*', $serviceManager->get('Proletarier\Handler\EventLogger'), -1000);
+        $eventManager->attach(new LoggingListener($serviceManager->get('Proletarier\Log')));
 
         // If we can (PHP 5.5 +), set the process title of workers after they launch
         if (function_exists('cli_set_process_title')) {
@@ -92,7 +92,10 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
     public function getConsoleUsage(AdapterInterface $console)
     {
         return array(
-            'proletarier run' => 'Run the Proletarier message broker'
+            'proletarier run' =>
+                'Run the Proletarier message broker',
+            'proletarier trigger <event> [<params>]' =>
+                'Trigger an event, with optional parameters as a JSON-seiralized string'
         );
     }
 }
