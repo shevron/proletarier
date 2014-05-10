@@ -4,6 +4,7 @@ namespace Proletarier;
 
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManager;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 trait EventManagerAwareTrait
 {
@@ -31,7 +32,11 @@ trait EventManagerAwareTrait
     public function getEventManager()
     {
         if (! $this->eventManager) {
-            $this->eventManager = new EventManager();
+            if ($this instanceof ServiceLocatorAwareInterface) {
+                $this->eventManager = $this->getServiceLocator()->get('Proletarier\EventManager');
+            } else {
+                $this->eventManager = new EventManager();
+            }
         }
 
         return $this->eventManager;
