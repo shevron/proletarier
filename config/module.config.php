@@ -35,6 +35,14 @@ return array(
 //            'Proletarier\Client'       => array('Proletarier\Client', 'factory'),
             'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',
         ),
+
+        'abstract_factories' => array(
+            'Proletarier\Log'       => 'Zend\Log\LoggerAbstractServiceFactory',
+        ),
+
+        'invokables' => array(
+            'Proletarier\Handler\EventLogger',
+        ),
     ),
 
     'proletarier' => array(
@@ -53,4 +61,26 @@ return array(
             'connect'   => null,
         ),
     )
+    ),
+
+    'log' => array(
+        'Proletarier\Log' => array(
+            'writers' => array(
+                'stderr' => array(
+                    'name' => 'stream',
+                    'options' => array(
+                        'stream' => 'php://stderr',
+                        'filters' => array(
+                            'priority' => array(
+                                'name' => 'priority',
+                                'options' => array(
+                                    'priority' => \Zend\Log\Logger::DEBUG
+                                )
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ),
 );

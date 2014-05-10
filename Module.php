@@ -3,16 +3,45 @@
 namespace Proletarier;
 
 use Zend\Console\Adapter\AdapterInterface;
+use Zend\EventManager\Event;
+use Zend\EventManager\EventManager;
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConsoleUsageProviderInterface;
+use Zend\ServiceManager\ServiceManager;
 
 class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterface
 {
-    public function getConfig()
+    public function onBootstrap(Event $e)
     {
-        return require __DIR__ . '/config/module.config.php';
+        /* @var $serviceManager ServiceManager */
+        $serviceManager = $e->getTarget()->getServiceManager();
+        $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
+
+        $eventManager->attach('*', $serviceManager->get('Proletarier\Handler\EventLogger'), -1000);
     }
 
+    /**
+     * Get configuration
+     *
+     * This also sets some dynamic default for the worker bind address, if none was set
+     *
+     * @return array
+     */
+    public function getConfig()
+    {
+        $config = require __DIR__ . '/config/module.config.php';
+        if (! $config['proletarier']['worker']['bind']) {
+            $config['proletarier']['worker']['bind'] = 'ipc://' . tempnam(sys_get_temp_dir(), 'proletarier_ipc_');
+        }
+
+        return $config;
+    }
+
+    /**
+     * Get autoloader configuration
+     *
+     * @return array
+     */
     public function getAutoloaderConfig()
     {
         return [
