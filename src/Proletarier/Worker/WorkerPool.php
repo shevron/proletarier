@@ -4,11 +4,13 @@ namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
 {
     use EventManagerAwareTrait;
+    use ServiceLocatorAwareTrait;
 
     protected $connect;
 
@@ -17,8 +19,6 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
     protected $running  = false;
 
     protected $shutdown = false;
-
-    protected $locator;
 
     protected $workerProto;
 
@@ -101,28 +101,6 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
 
         $this->running = false;
         $this->getEventManager()->trigger('workerpool.exit', $this);
-    }
-
-    /**
-     * Set service locator
-     *
-     * @param ServiceLocatorInterface $serviceLocator
-     * @return $this
-     */
-    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
-    {
-        $this->locator = $serviceLocator;
-        return $this;
-    }
-
-    /**
-     * Get service locator
-     *
-     * @return ServiceLocatorInterface
-     */
-    public function getServiceLocator()
-    {
-        return $this->locator;
     }
 
     /**

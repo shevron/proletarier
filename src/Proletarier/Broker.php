@@ -5,6 +5,7 @@ namespace Proletarier;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use ZMQ;
 use ZMQContext;
@@ -20,9 +21,9 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
     use EventManagerAwareTrait;
 
     /**
-     * @var ServiceLocatorInterface
+     * Glue in ServiceLocator awareness
      */
-    protected $locator;
+    use ServiceLocatorAwareTrait;
 
     /**
      * @var string Address for front-end connections (connections from clients)
@@ -117,28 +118,6 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
     public function idle()
     {
         $this->getEventManager()->trigger('broker.idle', $this);
-    }
-
-    /**
-     * Set service locator
-     *
-     * @param ServiceLocatorInterface $serviceLocator
-     * @return $this
-     */
-    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
-    {
-        $this->locator = $serviceLocator;
-        return $this;
-    }
-
-    /**
-     * Get service locator
-     *
-     * @return ServiceLocatorInterface
-     */
-    public function getServiceLocator()
-    {
-        return $this->locator;
     }
 
     /**

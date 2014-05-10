@@ -4,11 +4,12 @@ namespace Proletarier\Handler;
 
 use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 abstract class AbstractHandler implements ServiceLocatorAwareInterface
 {
-    protected $serviceLocator;
+    use ServiceLocatorAwareTrait;
 
     /**
      * Handle an event
@@ -18,26 +19,4 @@ abstract class AbstractHandler implements ServiceLocatorAwareInterface
      * @return bool
      */
     abstract public function __invoke(EventInterface $event);
-
-    /**
-     * Set service locator
-     *
-     * @param  ServiceLocatorInterface $serviceLocator
-     * @return $this
-     */
-    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
-    {
-        $this->serviceLocator = $serviceLocator;
-        return $this;
-    }
-
-    /**
-     * Get service locator
-     *
-     * @return ServiceLocatorInterface
-     */
-    public function getServiceLocator()
-    {
-        return $this->serviceLocator;
-    }
 }
