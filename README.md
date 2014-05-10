@@ -1,3 +1,5 @@
+An asynchronous event handler module for Zend Framework 2 apps based on ØMQ
+
 Overview
 =========
 Proletarier is a [ZeroMQ](http://zeromq.org) based asynchronous event processing
