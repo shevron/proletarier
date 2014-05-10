@@ -83,7 +83,7 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
                 $status = $worker->wait(false);
                 if ($status !== null) {
                     $exited[] = $pid;
-                    $this->getEventManager()->trigger('workerpool.worker-exited', $this, array($worker));
+                    $this->getEventManager()->trigger('workerpool.worker-exited', $this, array('worker' => $worker));
                 }
             }
 

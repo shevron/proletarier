@@ -197,6 +197,16 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
     }
 
     /**
+     * Get the process ID for this worker
+     *
+     * @return null|integer
+     */
+    public function getProcessId()
+    {
+        return $this->pid;
+    }
+
+    /**
      * Shut the worker down.
      *
      * @return $this
@@ -257,13 +267,13 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
             $payload = null;
             try {
                 $payload = $receiver->recv();
-                $this->getEventManager()->trigger("recv.read", $this, array('payload' => $payload));
+                $this->getEventManager()->trigger("worker.read", $this, array('payload' => $payload));
             } catch (ZMQSocketException $ex) {
                 // This can mean we are shutting down, or an error occurred
                 if ($ex->getCode() == 4) {
                     $this->shutdown();
                 } else {
-                    $this->getEventManager()->trigger("recv.error", $this, array('exception' => $ex->getMessage()));
+                    $this->getEventManager()->trigger("worker.read.error", $this, array('exception' => $ex));
                 }
             }
 

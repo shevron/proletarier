@@ -2,7 +2,7 @@
 
 namespace Proletarier\Handler;
 
-use Zend\EventManager\Event;
+use Zend\EventManager\EventInterface;
 
 class EventLogger extends AbstractHandler
 {
@@ -13,10 +13,10 @@ class EventLogger extends AbstractHandler
      *
      * @return bool
      */
-    public function __invoke(Event $event)
+    public function __invoke(EventInterface $event)
     {
         /* @var $logger \Zend\Log\Logger */
         $log = $this->getServiceLocator()->get('Proletarier\Log');
-        $log->debug("Proletarier event: " . $event->getName());
+        $log->debug("Application event: " . $event->getName());
     }
 }

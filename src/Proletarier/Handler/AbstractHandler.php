@@ -2,7 +2,7 @@
 
 namespace Proletarier\Handler;
 
-use Zend\EventManager\Event;
+use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -13,11 +13,11 @@ abstract class AbstractHandler implements ServiceLocatorAwareInterface
     /**
      * Handle an event
      *
-     * @param Event $event
+     * @param EventInterface $event
      *
      * @return bool
      */
-    abstract public function __invoke(Event $event);
+    abstract public function __invoke(EventInterface $event);
 
     /**
      * Set service locator
