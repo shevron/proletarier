@@ -98,7 +98,7 @@ environment local changes to the configuration. Here is a sample configuration f
         'proletarier' => array(
             'listeners' => array(
                 array('*', 'Proletarier\Handler\EventLogger', -1000),
-                array('account.created', 'Application\EventHandler\ConfigureWorkflows'),
+                array('account.created', 'Application\EventHandler\AccountCreationHandler'),
                 array('account.expired', array('Application\Model\Account', 'expiredHandler),
                 'Application\EventHandler\TeamNotificationListener',
             ),
@@ -151,6 +151,123 @@ Once you call trigger, the backend daemon will recieve an event object
 through a message and will trigger, one by one, all listeners attached
 to this event.
 
+A Note on Service Persistance
+-----------------------------
+Unlike standard Web PHP processes, Proletarier processes are long-running and
+do not automatically clean up resources on request end. This can have some
+surprising side effects on resource availability and memory utilization, and
+you should keep this in mind, especially when using persistant services such
+as ServiceManager or DI based services.
+
+Most notably, services that maintain network or DB connections may need some
+adjustments when being used inside a Proletarier event handler.
+
+For example, many Zend\Db adapters will not close connections unless explicitly
+ordered to, or unless the connection object is destroyed. However, when fetched
+as a non-shared service from Zend\ServiceManager a DB adapter object will never
+be explicitly destroyed as it is cached by the service manager itself. For this
+reason, and for resource management reasons, it is recommended to explicitly
+shut down connections when they are no longer used inside a handler:
+
+    namespace Application\EventHandler;
+
+    use Proletarier\Handler\AbstractHandler;
+    use Zend\EventManager\EventInterface;
+
+    class AccountCreationHandler extends AbstractHandler
+    {
+        /**
+         * Do some post account creation processing
+         *
+         * @param EventInterface $event
+         * @return bool
+         */
+        public function __invoke(EventInterface $event)
+        {
+            $dbAdapter = $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter');
+
+            // ... do some stuff with the DB adapter
+
+            // Disconnect form DB to avoid timeout errors on long-running process
+            $dbAdapter->getDriver()->getConnection()->disconnect();
+        }
+    }
+
+Another notable example are network based Zend\Mail transports, such as
+`Zend\Mail\Transport\Smtp`. These do not provide an API to explicitly close
+connections, and thus it is recommended to use non-shared instances of them
+if fetched from the service manager:
+
+    namespace Application\EventHandler;
+
+    use Zend\EventManager\EventInterface;
+    use Zend\EventManager\EventManagerInterface;
+    use Zend\EventManager\ListenerAggregateInterface;
+    use Zend\EventManager\ListenerAggregateTrait;
+    use Zend\ServiceManager\ServiceLocatorAwareInterface;
+    use Zend\ServiceManager\ServiceLocatorAwareTrait;
+
+    class TeamNotificationListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
+    {
+        use ListenerAggregateTrait;
+        use ServiceLocatorAwareTrait;
+
+        /**
+         * Attach listeners for internal notifications on events
+         *
+         * @param EventManagerInterface $events
+         */
+        public function attach(EventManagerInterface $events)
+        {
+            $this->listeners[] = $events->attach('account.created', array($this, 'accountCreated'));
+            $this->listeners[] = $events->attach('account.expired', array($this, 'accountExpired'));
+        }
+
+        public function accountCreated(EventInterface $event)
+        {
+            $this->sendNotification(
+                "An account was created",
+                "Account ID is " . $event->getParam('account_id')
+            );
+        }
+
+        public function accountExpired(EventInterface $event)
+        {
+            $this->sendNotification(
+                "An account has expired",
+                "Account ID is " . $event->getParam('account_id')
+            );
+        }
+
+        private function sendNotification($subject, $message)
+        {
+            $config = $this->getServiceLocator()->get('Config')['notifications'];
+            $to   = $config['to'];
+            $from = $config['from'];
+
+            // Need a new instance each time due to long-running process effects
+            // (must disconnect and reconnect)
+            $this->getServiceLocator()->setShared('MailTransport', false);
+            /* @var $transport \Zend\Mail\Transport\TransportInterface */
+            $transport = $this->getServiceLocator()->get('MailTransport');
+
+            $mail = new Message();
+            $mail->setTo($to)
+                 ->setFrom($from)
+                 ->setSubject($subject)
+                 ->setBody($message);
+
+            $transport->send($mail);
+        }
+    }
+
+Note that in this case, in the `sendNotification` method, the `MailTransport`
+service is marked as non-shared before it is fetched, to ensure a new
+transport object is created on each call (and is destroyed at the end of it).
+
+The above code is also a good example of using a ListenerAggregate object to
+handle multiple events with some contained code.
+
 Additional Configuration
 ------------------------
 TBD. In the mean time look in the module's `config/module.config.php` file.
@@ -182,6 +299,18 @@ as a new message arriving or internal errors). The following events can be
 listened for if you want to extend Proletarier with additional logic:
 
 TBD
+
+TODO
+====
+Some considerations and ideas for future improvements:
+
+* Allow easy hooking into internal events for things like resource cleanup,
+  connection closing, etc. after an event was handled
+* Better internal logging
+* Delayed event processing using persistant queue-like storage
+* Crash detection, process recycling (good for resource consumption)
+* Parallel execution of event handlers (?)
+* Auto scale-up / scale-down
 
 Copyright
 =========
