@@ -1,14 +1,15 @@
 <?php
 
-namespace Proletarier;
+namespace Proletarier\Client;
 
+use Proletarier\Event;
 use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use ZMQContext;
 use ZMQSocket;
 use ZMQ;
 
-class Client
+class Client implements ClientInterface
 {
     /**
      * @var $string string Connection address
@@ -34,8 +35,6 @@ class Client
      */
     public function trigger($event, array $params = array())
     {
-        $socket = $this->connect();
-
         if (is_string($event)) {
             $event = new Event($event);
         }
@@ -48,7 +47,18 @@ class Client
             $event->setParams($params);
         }
 
-        $socket->send(Event::toJson($event));
+        $this->send(Event::toJson($event));
+    }
+
+    /**
+     * Send a message over the socket
+     *
+     * @param $message
+     */
+    protected function send($message)
+    {
+        $socket = $this->connect();
+        $socket->send();
     }
 
     /**
@@ -67,29 +77,5 @@ class Client
         }
 
         return $this->socket;
-    }
-
-    /**
-     * @param ServiceLocatorInterface $locator
-     *
-     * @return Client
-     * @throws \ErrorException
-     */
-    public static function factory(ServiceLocatorInterface $locator)
-    {
-        $config = $locator->get('Config');
-        if (! isset($config['proletarier'])) {
-            throw new \ErrorException("Configuration is missing the 'proletarier' key");
-        }
-
-        $connect = $config['proletarier']['client']['connect'];
-        if (! $connect) {
-            // Fall back: connect to the broker bind address
-            $connect = $config['proletarier']['broker']['bind'];
-        }
-
-        /* @var $client Client */
-        $client = new static($connect);
-        return $client;
     }
 }

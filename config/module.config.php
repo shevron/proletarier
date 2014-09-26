@@ -11,6 +11,7 @@ return array(
 
         'client' => array(
             'connect' => null,
+            'mock'    => false,
         ),
 
         'broker' => array(
@@ -61,7 +62,7 @@ return array(
             'Proletarier\Broker'       => array('Proletarier\Broker', 'factory'),
             'Proletarier\Worker'       => array('Proletarier\Worker\Worker', 'factory'),
             'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
-            'Proletarier\Client'       => array('Proletarier\Client', 'factory'),
+            'Proletarier\Client'       => array('Proletarier\Client\Factory', 'factory'),
             'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',
         ),
 
