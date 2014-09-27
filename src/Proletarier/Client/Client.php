@@ -58,7 +58,7 @@ class Client implements ClientInterface
     protected function send($message)
     {
         $socket = $this->connect();
-        $socket->send();
+        $socket->send($message);
     }
 
     /**
