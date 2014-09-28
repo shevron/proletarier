@@ -73,6 +73,7 @@ class Client implements ClientInterface
         if (! ($this->context && $this->socket)) {
             $this->context = new ZMQContext();
             $this->socket = new ZMQSocket($this->context, ZMQ::SOCKET_PUSH);
+            $this->socket->setSockOpt(ZMQ::SOCKOPT_LINGER, 30);
             $this->socket->connect($this->connect);
         }
 
