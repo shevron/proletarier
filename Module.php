@@ -11,26 +11,6 @@ use Zend\ServiceManager\ServiceManager;
 
 class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterface
 {
-    public function onBootstrap(Event $e)
-    {
-        /* @var $serviceManager ServiceManager */
-        $serviceManager = $e->getTarget()->getServiceManager();
-        $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
-
-        $eventManager->attach(new LoggingListener($serviceManager->get('Proletarier\Log')));
-
-        // If we can (PHP 5.5 +), set the process title of workers after they launch
-        if (function_exists('cli_set_process_title')) {
-            $eventManager->attach('workerpoo.launch', function ($e) {
-                cli_set_process_title('Proletarier master');
-            });
-
-            $eventManager->attach('worker.launch', function ($e) {
-                cli_set_process_title('Proletarier worker');
-            });
-        }
-    }
-
     /**
      * Get configuration
      *

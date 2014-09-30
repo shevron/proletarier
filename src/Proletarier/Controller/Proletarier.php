@@ -4,6 +4,7 @@ namespace Proletarier\Controller;
 
 use Zend\Console\Request;
 use Zend\Mvc\Controller\AbstractActionController;
+use Proletarier\LoggingListener;
 use Zend\View\Model\ConsoleModel;
 
 class Proletarier extends AbstractActionController
@@ -19,6 +20,7 @@ class Proletarier extends AbstractActionController
         if (! $this->getRequest() instanceof Request) {
             return;
         }
+        $this->initEvents();
 
         /* @var $broker \Proletarier\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
@@ -65,5 +67,28 @@ class Proletarier extends AbstractActionController
         }
 
         $client->trigger($event, $params);
+    }
+
+    /**
+     * Initialize some important events before running
+     *
+     */
+    private function initEvents()
+    {
+        $serviceManager = $this->getServiceLocator();
+        $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
+
+        $eventManager->attach(new LoggingListener($serviceManager->get('Proletarier\Log')));
+
+        // If we can (PHP 5.5 +), set the process title of workers after they launch
+        if (function_exists('cli_set_process_title')) {
+            $eventManager->attach('workerpool.launch', function ($e) {
+                cli_set_process_title('Proletarier master');
+            });
+
+            $eventManager->attach('worker.launch', function ($e) {
+                cli_set_process_title('Proletarier worker');
+            });
+        }
     }
 }
