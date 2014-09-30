@@ -2,12 +2,11 @@
 
 namespace Proletarier\Controller;
 
-use Zend\Console\Request;
-use Zend\Mvc\Controller\AbstractActionController;
 use Proletarier\LoggingListener;
+use Zend\Mvc\Controller\AbstractConsoleController;
 use Zend\View\Model\ConsoleModel;
 
-class Proletarier extends AbstractActionController
+class Proletarier extends AbstractConsoleController
 {
     /**
      * Main Proletarier console action - run the broker
@@ -16,10 +15,6 @@ class Proletarier extends AbstractActionController
      */
     public function runAction()
     {
-        // Only work for console requests
-        if (! $this->getRequest() instanceof Request) {
-            return;
-        }
         $this->initEvents();
 
         /* @var $broker \Proletarier\Broker */
@@ -47,11 +42,6 @@ class Proletarier extends AbstractActionController
      */
     public function triggerAction()
     {
-        // Only work for console requests
-        if (! $this->getRequest() instanceof Request) {
-            return;
-        }
-
         /* @var $client \Proletarier\Client */
         $client = $this->getServiceLocator()->get('Proletarier\Client');
 
