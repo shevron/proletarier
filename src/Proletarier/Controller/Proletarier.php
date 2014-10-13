@@ -19,6 +19,7 @@ class Proletarier extends AbstractConsoleController
 
         /* @var $broker \Proletarier\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
+        $broker->bind();
 
         /* @var $workerPool \Proletarier\Worker\WorkerPool */
         $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');

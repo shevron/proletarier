@@ -36,6 +36,16 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
     protected $backAddress;
 
     /**
+     * @var ZMQContext
+     */
+    protected $context;
+
+    /**
+     * @var ZMQDevice
+     */
+    protected $device;
+
+    /**
      * @var integer
      */
     protected $idleTimeout = null;
@@ -73,32 +83,59 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
     }
 
     /**
+     * Create the ZeroMQ context and bind sockets
+     *
+     * This can be called before calling run - if not it will be called automatically. If called
+     * multiple times, this has no effect.
+     *
+     * The 'broker.bind.pre' and 'broker.bind.post' events are emitted before and after binding.
+     *
+     * @return boolean
+     */
+    public function bind()
+    {
+        if (! $this->context) {
+            $this->getEventManager()->trigger('broker.bind.pre', $this);
+
+            $this->context = new ZMQContext();
+
+            $frontend = new ZMQSocket($this->context, ZMQ::SOCKET_PULL);
+            $frontend->bind($this->frontAddress);
+            $backend = new ZMQSocket($this->context, ZMQ::SOCKET_PUSH);
+            $backend->bind($this->backAddress);
+
+            $this->device = new ZMQDevice($frontend, $backend);
+            if ($this->idleTimeout) {
+                $this->device->setIdleTimeout($this->idleTimeout)
+                             ->setIdleCallback(array($this, 'idle'));
+            }
+
+            $this->getEventManager()->trigger('broker.bind.post', $this);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Run the broker
      *
      */
     public function run()
     {
-        $this->getEventManager()->trigger('broker.run.pre', $this);
-
-        $context = new ZMQContext();
-
-        $frontend = new ZMQSocket($context, ZMQ::SOCKET_PULL);
-        $frontend->bind($this->frontAddress);
-        $backend = new ZMQSocket($context, ZMQ::SOCKET_PUSH);
-        $backend->bind($this->backAddress);
-
-        $device = new ZMQDevice($frontend, $backend);
-        if ($this->idleTimeout) {
-            $device->setIdleTimeout($this->idleTimeout)
-                   ->setIdleCallback(array($this, 'idle'));
+        if (! $this->device) {
+            $this->bind();
         }
+
+        $this->getEventManager()->trigger('broker.run.pre', $this);
 
         $this->hookShutdownSignals();
         $this->getEventManager()->trigger('broker.run', $this);
 
         try {
             // This blocks until interrupted
-            $device->run();
+            $this->device->run();
         } catch (ZMQDeviceException $e) {
             if ($e->getCode() == 4) {
                 // Interrupt
