@@ -19,17 +19,19 @@ class Proletarier extends AbstractConsoleController
 
         /* @var $broker \Proletarier\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
-        $broker->bind();
 
         /* @var $workerPool \Proletarier\Worker\WorkerPool */
         $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');
         $workerPool->launch();
 
-        $broker->run();
-
-        // Shut the workers down
-        $workerPool->shutdown();
-        $workerPool->wait();
+        try {
+            $broker->bind();
+            $broker->run();
+        } finally {
+            // Shut the workers down
+            $workerPool->shutdown();
+            $workerPool->wait();
+        }
 
         $result = new ConsoleModel();
         $result->setErrorLevel(0);
