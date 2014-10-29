@@ -9,7 +9,7 @@ class EventLogger extends AbstractHandler
     /**
      * Handle an event
      *
-     * @param Event $event
+     * @param EventInterface $event
      *
      * @return bool
      */
