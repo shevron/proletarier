@@ -70,16 +70,14 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
                     $priority = 1;
                 }
 
-                if (is_string($callback) && $this->getServiceLocator()->has($callback)) {
-                    // Assume callback is an invokable that can be fetched from the SM
-                    $callback = $this->getServiceLocator()->get($callback);
+                if (is_string($callback)) {
+                    $callback = $this->getHandlerInstance($callback);
                 }
 
                 $this->appEventManager->attach($event, $callback, $priority);
 
-            } elseif (is_string($listenerSpec) && $this->getServiceLocator()->has($listenerSpec)) {
-                // Assume listener is a service implementing ListenerAggregateInterface
-                $listener = $this->getServiceLocator()->get($listenerSpec);
+            } elseif (is_string($listenerSpec)) {
+                $listener = $this->getHandlerInstance($listenerSpec);
                 if ($listener instanceof ListenerAggregateInterface) {
                     $this->appEventManager->attach($listener);
                 } else {
@@ -338,5 +336,25 @@ class Worker implements WorkerInterface, ServiceLocatorAwareInterface
 
         $worker = new Worker($connect);
         return $worker;
+    }
+
+    /**
+     * @param  string $handler
+     *
+     * @return callable|ListenerAggregateInterface
+     */
+    protected function getHandlerInstance($handler)
+    {
+        if ($this->getServiceLocator()->has($handler)) {
+            // Assume callback is an invokable that can be fetched from the SM
+            $instance = $this->getServiceLocator()->get($handler);
+        } elseif (class_exists($handler)) {
+            $instance = new $handler();
+            if ($instance instanceof ServiceLocatorAwareInterface) {
+                $instance->setServiceLocator($this->getServiceLocator());
+            }
+        }
+
+        return $instance;
     }
 }

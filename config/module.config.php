@@ -71,7 +71,7 @@ return array(
         ),
 
         'invokables' => array(
-            'Proletarier\Handler\EventLogger',
+            'Proletarier\Handler\EventLogger' => 'Proletarier\Handler\EventLogger',
         ),
     ),
 
