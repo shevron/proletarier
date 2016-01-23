@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
+
 namespace Proletarier\Worker;
 
 use Proletarier\EventManagerAwareTrait;
@@ -12,9 +19,7 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
     use EventManagerAwareTrait;
     use ServiceLocatorAwareTrait;
 
-    protected $connect;
-
-    protected $poolSize = 3;
+    protected $poolSize;
 
     protected $running  = false;
 
@@ -23,14 +28,14 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
     protected $workerProto;
 
     /**
-     * @var Worker[]
+     * @var ForkedWorker[]
      */
     protected $workers  = array();
 
-    public function __construct($connect, $poolSize)
+    public function __construct(Worker $workerProto, $poolSize)
     {
-        $this->connect = $connect;
-        $this->poolSize = $poolSize;
+        $this->workerProto = $workerProto;
+        $this->poolSize = (int) $poolSize;
     }
 
     /**
@@ -47,8 +52,6 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
         $this->getEventManager()->trigger('workerpool.launch', $this);
         for ($i = 0; $i < $this->poolSize; $i++) {
             $w = $this->createNewWorker();
-            $w->setEventManager($this->getEventManager());
-
             $pid = $w->launch();
             $this->workers[$pid] = $w;
         }
@@ -73,6 +76,8 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
 
     /**
      * Wait for all workers to exit
+     *
+     * @param boolean $block
      */
     public function wait($block = true)
     {
@@ -106,15 +111,12 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
     /**
      * Create a new worker
      *
-     * @return Worker
+     * @return ForkedWorker
      */
     protected function createNewWorker()
     {
-        if ($this->workerProto) {
-            return clone $this->workerProto;
-        } else {
-            return new Worker($this->connect);
-        }
+        $worker = clone $this->workerProto;
+        return new ForkedWorker($worker);
     }
 
     /**
@@ -131,13 +133,8 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
         }
 
         $poolSize = $config['proletarier']['worker']['pool_size'];
-        $connect = $config['proletarier']['worker']['connect'];
-        if ($connect === null) {
-            $connect = $config['proletarier']['worker']['bind'];
-        }
-
-        $pool = new WorkerPool($connect, $poolSize);
-        $pool->workerProto = $locator->get('Proletarier\Worker');
+        $worker = $locator->get('Proletarier\Worker'); /* @var $worker Worker */
+        $pool = new WorkerPool($worker, $poolSize);
 
         return $pool;
     }

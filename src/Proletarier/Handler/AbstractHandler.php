@@ -5,7 +5,6 @@ namespace Proletarier\Handler;
 use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 abstract class AbstractHandler implements ServiceLocatorAwareInterface
 {

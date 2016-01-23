@@ -3,7 +3,6 @@
 namespace Proletarier;
 
 use Zend\EventManager\EventManagerAwareInterface;
-use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
