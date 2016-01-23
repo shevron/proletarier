@@ -4,7 +4,8 @@ namespace Proletarier\Client;
 
 use Proletarier\Event;
 use Zend\EventManager\EventInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Serializer\Adapter\AdapterInterface as SerializerInterface;
+use Zend\Serializer\Adapter\Json;
 use ZMQContext;
 use ZMQSocket;
 use ZMQ;
@@ -12,16 +13,33 @@ use ZMQ;
 class Client implements ClientInterface
 {
     /**
-     * @var $string string Connection address
+     * @var string Connection address
      */
     protected $connect;
 
+    /**
+     * @var ZMQContext
+     */
     protected $context;
 
+    /**
+     * @var ZMQSocket
+     */
     protected $socket;
 
-    public function __construct($connect)
+    /**
+     * Serliazer object
+     *
+     * @var SerializerInterface
+     */
+    protected $serializer;
+
+    public function __construct($connect, SerializerInterface $serializer = null)
     {
+        if (! $serializer) {
+            $serializer = new Json();
+        }
+        $this->serializer = $serializer;
         $this->connect = $connect;
     }
 
@@ -47,7 +65,8 @@ class Client implements ClientInterface
             $event->setParams($params);
         }
 
-        $this->send(Event::toJson($event));
+        $payload = $this->serializer->serialize($event);
+        $this->send($payload);
     }
 
     /**

@@ -1,50 +1,50 @@
 <?php
 
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
+
 namespace Proletarier;
 
-use Zend\EventManager\EventInterface;
+use Zend\Stdlib\ArraySerializableInterface;
 
-class Event extends \Zend\EventManager\Event
+class Event extends \Zend\EventManager\Event implements \JsonSerializable, ArraySerializableInterface
 {
     /**
-     * Convert a JSON-serialized event into an object
-     *
-     * @param $string
-     *
-     * @return Event
-     * @throws \InvalidArgumentException
+     * @return array
      */
-    public static function fromJson($string)
+    function jsonSerialize()
     {
-        $data = json_decode($string, true);
-        if (! is_array($data)) {
-            throw new \InvalidArgumentException("invalid payload, not a JSON-serialized object");
-        }
-
-        if (! isset($data['name'])) {
-            throw new \InvalidArgumentException("name attribute is missing from json-decoded string");
-        }
-
-        $event = new Event($data['name']);
-        if (isset($data['params'])) {
-            $event->setParams($data['params']);
-        }
-
-        return $event;
+        return $this->getArrayCopy();
     }
 
     /**
-     * Convert an event object into a serialized JSON string
-     *
-     * @param EventInterface $event
-     *
-     * @return mixed|string|void
+     * @param array $array
+     * @return $this
      */
-    public static function toJson(EventInterface $event)
+    public function exchangeArray(array $array)
     {
-        return json_encode(array(
-            'name' => $event->getName(),
-            'params' => $event->getParams()
-        ));
+        if (isset($array['name'])) {
+            $this->setName($array['name']);
+        }
+        if (isset($array['params'])) {
+            $this->setParams($array['params']);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getArrayCopy()
+    {
+        return [
+            'name' => $this->getName(),
+            'params' => $this->getParams()
+        ];
     }
 }
