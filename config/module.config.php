@@ -60,7 +60,7 @@ return array(
     'service_manager' => array(
         'factories' => array(
             'Proletarier\Broker'       => array('Proletarier\Broker', 'factory'),
-            'Proletarier\Worker'       => array('Proletarier\Worker\Worker', 'factory'),
+            'Proletarier\Worker'       => Proletarier\Worker\Factory::class,
             'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
             'Proletarier\Client'       => array('Proletarier\Client\Factory', 'factory'),
             'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',

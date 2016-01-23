@@ -17,7 +17,7 @@ use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Json\Json as ZendJson;
 
-class WorkerFactory
+class Factory
 {
     /**
      * @param  ServiceLocatorInterface $services
