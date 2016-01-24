@@ -1,28 +1,28 @@
 <?php
 
-namespace Proletarier;
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
 
-use Zend\EventManager\EventManagerAwareInterface;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorInterface;
+namespace Proletarier\Broker;
+
 use ZMQ;
 use ZMQContext;
 use ZMQSocket;
 use ZMQDevice;
 use ZMQDeviceException;
+use Zend\EventManager\EventManagerAwareInterface;
+use Proletarier\Event\EventManagerAwareTrait;
 
-class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
+class Broker implements EventManagerAwareInterface
 {
     /**
      * Glue in event manager awareness
      */
     use EventManagerAwareTrait;
-
-    /**
-     * Glue in ServiceLocator awareness
-     */
-    use ServiceLocatorAwareTrait;
 
     /**
      * @var string Address for front-end connections (connections from clients)
@@ -168,24 +168,5 @@ class Broker implements EventManagerAwareInterface, ServiceLocatorAwareInterface
 
         pcntl_signal(SIGTERM, $terminate);
         pcntl_signal(SIGINT, $terminate);
-    }
-
-    /**
-     * @param ServiceLocatorInterface $locator
-     *
-     * @throws \ErrorException
-     * @return Broker
-     */
-    public static function factory(ServiceLocatorInterface $locator)
-    {
-        $config = $locator->get('Config');
-        if (! isset($config['proletarier'])) {
-            throw new \ErrorException("Configuration is missing the 'proletarier' key");
-        }
-
-        /* @var $broker Broker */
-        $broker = new static($config['proletarier']['broker']['bind'], $config['proletarier']['worker']['bind']);
-
-        return $broker;
     }
 }

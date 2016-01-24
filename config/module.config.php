@@ -59,7 +59,7 @@ return array(
 
     'service_manager' => array(
         'factories' => array(
-            'Proletarier\Broker'       => array('Proletarier\Broker', 'factory'),
+            'Proletarier\Broker'       => Proletarier\Broker\Factory::class,
             'Proletarier\Worker'       => Proletarier\Worker\Factory::class,
             'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
             'Proletarier\Client'       => array('Proletarier\Client\Factory', 'factory'),
