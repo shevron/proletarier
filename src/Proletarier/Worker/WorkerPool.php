@@ -10,6 +10,7 @@
 namespace Proletarier\Worker;
 
 use Proletarier\Event\EventManagerAwareTrait;
+use Zend\EventManager\EventInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -49,11 +50,12 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
             return;
         }
 
+        // Handle exiting children
+        $this->getEventManager()->attach('worker.forking.child-exited', [$this, 'childExitHandler']);
+
         $this->getEventManager()->trigger('workerpool.launch', $this);
         for ($i = 0; $i < $this->poolSize; $i++) {
-            $w = $this->createNewWorker();
-            $pid = $w->launch();
-            $this->workers[$pid] = $w;
+            $this->launchWorker();
         }
 
         $this->running = true;
@@ -109,14 +111,37 @@ class WorkerPool implements WorkerInterface, ServiceLocatorAwareInterface
     }
 
     /**
-     * Create a new worker
+     * Handler for child exit event.
+     *
+     * If the child exited prematurely, will respawn a new one.
+     *
+     * @param EventInterface $event
+     */
+    public function childExitHandler(EventInterface $event)
+    {
+        /* @var ForkedWorker $child */
+        $child = $event->getTarget();
+        $pid = $child->getProcessId();
+        $child->wait();
+
+        unset($this->workers[$pid]);
+        if (! $this->shutdown) {
+            $this->launchWorker();
+        }
+    }
+
+    /**
+     * Create a new worker, start it and add it to workers array
      *
      * @return ForkedWorker
      */
-    protected function createNewWorker()
+    protected function launchWorker()
     {
-        $worker = clone $this->workerProto;
-        return new ForkedWorker($worker);
+        $worker = new ForkedWorker(clone $this->workerProto);
+        $pid = $worker->launch();
+        $this->workers[$pid] = $worker;
+
+        return $worker;
     }
 
     /**

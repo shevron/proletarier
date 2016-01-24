@@ -193,7 +193,7 @@ class ForkedWorker implements WorkerInterface
      */
     public function childExitedHandler()
     {
-        $this->getEventManager()->trigger('worker.forking.child-exited', $this->worker);
+        $this->getEventManager()->trigger('worker.forking.child-exited', $this);
     }
 
     /**
