@@ -38,6 +38,16 @@ return array(
                     )
                 ),
 
+                'proletarier-run-worker' => array(
+                    'options' => array(
+                        'route' => 'proletarier worker',
+                        'defaults' => array(
+                            'controller' => 'proletarier',
+                            'action'     => 'run-worker'
+                        )
+                    )
+                ),
+
                 'proletarier-trigger' => array(
                     'options' => array(
                         'route' => 'proletarier trigger <event> [<params>]',

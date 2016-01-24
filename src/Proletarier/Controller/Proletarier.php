@@ -71,6 +71,25 @@ class Proletarier extends AbstractConsoleController
         $client->trigger($event, $params);
     }
 
+    public function runWorkerAction()
+    {
+        $this->initEvents();
+
+        /* @var $worker \Proletarier\Worker\Worker */
+        $worker = $this->getServiceLocator()->get('Proletarier\Worker');
+
+        try {
+            $worker->launch();
+        } finally {
+            $worker->shutdown();
+        }
+
+        $result = new ConsoleModel();
+        $result->setErrorLevel(0);
+
+        return $result;
+    }
+
     /**
      * Initialize some important events before running
      *
