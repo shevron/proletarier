@@ -2,7 +2,7 @@
 
 namespace Proletarier\Client;
 
-use Proletarier\Event;
+use Proletarier\Event\Event;
 use Zend\EventManager\EventInterface;
 use Zend\Serializer\Adapter\AdapterInterface as SerializerInterface;
 use Zend\Serializer\Adapter\Json;

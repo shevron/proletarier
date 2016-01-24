@@ -3,13 +3,14 @@
 namespace Proletarier\Controller;
 
 use Proletarier\LoggingListener;
+use Zend\EventManager\EventManagerInterface;
 use Zend\Mvc\Controller\AbstractConsoleController;
 use Zend\View\Model\ConsoleModel;
 
 class Proletarier extends AbstractConsoleController
 {
     /**
-     * Main Proletarier console action - run the broker
+     * Main Proletarier console action - run the broker and worker pool
      *
      * @return array|void
      */
@@ -45,7 +46,7 @@ class Proletarier extends AbstractConsoleController
      */
     public function triggerAction()
     {
-        /* @var $client \Proletarier\Client */
+        /* @var $client \Proletarier\Client\ClientInterface */
         $client = $this->getServiceLocator()->get('Proletarier\Client');
 
         $event = $this->getRequest()->getParam('event');
@@ -69,17 +70,20 @@ class Proletarier extends AbstractConsoleController
     private function initEvents()
     {
         $serviceManager = $this->getServiceLocator();
-        $eventManager = $serviceManager->get('Proletarier\EventManager'); /* @var $eventManager EventManager */
+        /* @var $eventManager EventManagerInterface */
+        $eventManager = $serviceManager->get('Proletarier\EventManager');
 
-        $eventManager->attach(new LoggingListener($serviceManager->get('Proletarier\Log')));
+        /* @var $logger \Zend\Log\Logger */
+        $logger = $serviceManager->get('Proletarier\Log');
+        $eventManager->attach(new LoggingListener($logger));
 
         // If we can (PHP 5.5 +), set the process title of workers after they launch
         if (function_exists('cli_set_process_title')) {
-            $eventManager->attach('workerpool.launch', function ($e) {
+            $eventManager->attach('workerpool.launch', function () {
                 cli_set_process_title('Proletarier master');
             });
 
-            $eventManager->attach('worker.launch', function ($e) {
+            $eventManager->attach('worker.launch', function () {
                 cli_set_process_title('Proletarier worker');
             });
         }

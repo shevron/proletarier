@@ -1,6 +1,13 @@
 <?php
 
-namespace Proletarier;
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
+
+namespace Proletarier\Event;
 
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\EventManager;

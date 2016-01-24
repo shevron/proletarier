@@ -3,11 +3,8 @@
 namespace Proletarier;
 
 use Zend\Console\Adapter\AdapterInterface;
-use Zend\EventManager\Event;
-use Zend\EventManager\EventManager;
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConsoleUsageProviderInterface;
-use Zend\ServiceManager\ServiceManager;
 
 class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterface
 {

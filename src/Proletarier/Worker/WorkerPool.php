@@ -9,7 +9,7 @@
 
 namespace Proletarier\Worker;
 
-use Proletarier\EventManagerAwareTrait;
+use Proletarier\Event\EventManagerAwareTrait;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;

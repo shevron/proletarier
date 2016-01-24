@@ -7,7 +7,7 @@
  * @author    shahar@shoppimon.com
  */
 
-namespace Proletarier;
+namespace Proletarier\Event;
 
 use Zend\Stdlib\ArraySerializableInterface;
 

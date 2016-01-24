@@ -9,7 +9,7 @@
 
 namespace Proletarier\Worker;
 
-use Proletarier\EventManagerAwareTrait;
+use Proletarier\Event\EventManagerAwareTrait;
 
 class ForkedWorker implements WorkerInterface
 {

@@ -37,10 +37,15 @@ class Factory
             $connect = $config['worker']['bind'];
         }
 
-        $eventManager = $this->createEventManager($services, $config);
+        $appEventManager = $this->createEventManager($services, $config);
         $serializer = $this->createSerializer($services, $config);
 
-        $worker = new Worker($connect, $eventManager, $serializer);
+        $worker = new Worker($connect, $appEventManager, $serializer);
+
+        // Attach internal event manager
+        /* @var $events \Zend\EventManager\EventManagerInterface */
+        $events = $services->get('Proletarier\EventManager');
+        $worker->setEventManager($events);
 
         return $worker;
     }
