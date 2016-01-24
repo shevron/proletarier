@@ -1,6 +1,13 @@
 <?php
 
-namespace Proletarier;
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
+
+namespace Proletarier\Plugin;
 
 use Zend\EventManager\Event;
 use Zend\EventManager\EventManagerInterface;
@@ -8,7 +15,7 @@ use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\ListenerAggregateTrait;
 use Zend\Log\Logger;
 
-class LoggingListener implements ListenerAggregateInterface
+class InternalEventLogger implements ListenerAggregateInterface
 {
     use ListenerAggregateTrait;
 

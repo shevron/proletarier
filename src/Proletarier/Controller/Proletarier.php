@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Shoppimon Proletarier - Async event handler for ZF2 apps
+ *
+ * @copyright (c) 2016 Shoppimon LTD
+ * @author    shahar@shoppimon.com
+ */
+
 namespace Proletarier\Controller;
 
-use Proletarier\LoggingListener;
+use Proletarier\Plugin\InternalEventLogger;
+use Proletarier\Plugin\ProcessNameModifier;
 use Zend\EventManager\EventManagerInterface;
 use Zend\Mvc\Controller\AbstractConsoleController;
 use Zend\View\Model\ConsoleModel;
@@ -18,7 +26,7 @@ class Proletarier extends AbstractConsoleController
     {
         $this->initEvents();
 
-        /* @var $broker \Proletarier\Broker */
+        /* @var $broker \Proletarier\Broker\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
 
         /* @var $workerPool \Proletarier\Worker\WorkerPool */
@@ -75,17 +83,10 @@ class Proletarier extends AbstractConsoleController
 
         /* @var $logger \Zend\Log\Logger */
         $logger = $serviceManager->get('Proletarier\Log');
-        $eventManager->attach(new LoggingListener($logger));
-
-        // If we can (PHP 5.5 +), set the process title of workers after they launch
-        if (function_exists('cli_set_process_title')) {
-            $eventManager->attach('workerpool.launch', function () {
-                cli_set_process_title('Proletarier master');
-            });
-
-            $eventManager->attach('worker.launch', function () {
-                cli_set_process_title('Proletarier worker');
-            });
-        }
+        $eventManager->attach(new InternalEventLogger($logger));
+        $eventManager->attach(new ProcessNameModifier([
+            'workerpool.launch' => 'Proletarier master',
+            'worker.launch'     => 'Proletarier worker'
+        ]));
     }
 }
