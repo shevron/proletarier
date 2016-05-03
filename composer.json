@@ -1,17 +1,17 @@
 {
     "name": "shevron/proletarier",
-    "description": "An asynchronous event handler module for Zend Framework 2 apps based on ØMQ",
+    "description": "An asynchronous event handler module for Zend Framework 2.x apps based on ØMQ",
     "license": "Apache-2.0",
     "homepage": "https://github.com/shevron/proletarier",
     "keywords": [
-        "zf2", "zeromq", "zmq", "asynchronous", "async", "processing",
-        "queue", "zend-framework", "background"
+        "event", "zeromq", "zmq", "0mq", "asynchronous", "async",
+        "processing", "queue", "zend-framework", "background"
     ],
     "authors": [
         {
             "name": "Shahar Evron",
             "email": "shahar.evron@gmail.com",
-            "homepage": "http://arr.gr/",
+            "homepage": "https://arr.gr/",
             "role": "Developer"
         }
     ],
@@ -22,19 +22,20 @@
     },
     "require": {
         "php": ">=5.5",
-        "ext-pcntl": "*",
         "ext-zmq": "*",
         "ext-posix": "*",
         "zendframework/zend-stdlib": "~2.5.0",
         "zendframework/zend-eventmanager": "~2.5.0",
         "zendframework/zend-serializer": "~2.5.0",
         "zendframework/zend-json": "~2.5.0",
-
         "zendframework/zend-log": "~2.5.0",
         "zendframework/zend-view": "~2.5.0",
         "zendframework/zend-modulemanager": "~2.5.0",
         "zendframework/zend-servicemanager": "~2.5.0",
         "zendframework/zend-console": "~2.5.0",
         "zendframework/zend-mvc": "~2.5.0"
+    },
+    "suggest": {
+        "ext-pcntl": "Allows signal handling and cleaner shutdown of Worker processes"
     }
 }

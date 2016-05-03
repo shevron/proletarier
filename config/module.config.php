@@ -28,12 +28,12 @@ return array(
     'console' => array(
         'router' => array(
             'routes' => array(
-                'proletarier-run' => array(
+                'proletarier-run-broker' => array(
                     'options' => array(
-                        'route' => 'proletarier run',
+                        'route' => 'proletarier broker',
                         'defaults' => array(
                             'controller' => 'proletarier',
-                            'action'     => 'run'
+                            'action'     => 'run-broker'
                         )
                     )
                 ),
@@ -71,7 +71,6 @@ return array(
         'factories' => array(
             'Proletarier\Broker'       => Proletarier\Broker\Factory::class,
             'Proletarier\Worker'       => Proletarier\Worker\Factory::class,
-            'Proletarier\WorkerPool'   => array('Proletarier\Worker\WorkerPool', 'factory'),
             'Proletarier\Client'       => array('Proletarier\Client\Factory', 'factory'),
             'Proletarier\EventManager' => 'Zend\Mvc\Service\EventManagerFactory',
         ),

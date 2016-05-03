@@ -123,9 +123,7 @@ class Worker implements WorkerInterface
                 $this->getEventManager()->trigger("worker.read", $this, array('payload' => $payload));
             } catch (\ZMQSocketException $ex) {
                 // This can mean we are shutting down, or an error occurred
-                if ($ex->getCode() == 4) {
-                    $this->shutdown();
-                } else {
+                if ($ex->getCode() != 4) {
                     $this->getEventManager()->trigger("worker.read.error", $this, array('exception' => $ex));
                 }
             }

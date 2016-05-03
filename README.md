@@ -285,7 +285,6 @@ TBD.
 
 * `Proletarier\Broker`
 * `Proletarier\Worker`
-* `Proletarier\WorkerPool`
 * `Proletarier\Client`
 * `Proletarier\EventManager`
 * `Proletarier\Log`

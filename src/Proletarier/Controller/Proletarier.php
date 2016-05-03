@@ -17,29 +17,40 @@ use Zend\View\Model\ConsoleModel;
 
 class Proletarier extends AbstractConsoleController
 {
-    /**
-     * Main Proletarier console action - run the broker and worker pool
-     *
-     * @return array|void
-     */
-    public function runAction()
+    public function runBrokerAction()
     {
         $this->initEvents();
 
         /* @var $broker \Proletarier\Broker\Broker */
         $broker = $this->getServiceLocator()->get('Proletarier\Broker');
 
-        /* @var $workerPool \Proletarier\Worker\WorkerPool */
-        $workerPool = $this->getServiceLocator()->get('Proletarier\WorkerPool');
-        $workerPool->launch();
+        $broker->bind();
+        $broker->run();
+
+        $result = new ConsoleModel();
+        $result->setErrorLevel(0);
+
+        return $result;
+    }
+
+    public function runWorkerAction()
+    {
+        $this->initEvents();
+
+        /* @var $worker \Proletarier\Worker\Worker */
+        $worker = $this->getServiceLocator()->get('Proletarier\Worker');
+
+        // If we can, hook SIGTERM and SIGINT to the worker's shutdown action
+        if (function_exists('pcntl_signal')) {
+            pcntl_signal(SIGTERM, [$worker, 'shutdown']);
+            pcntl_signal(SIGINT, [$worker, 'shutdown']);
+        }
 
         try {
-            $broker->bind();
-            $broker->run();
-        } finally {
-            // Shut the workers down
-            $workerPool->shutdown();
-            $workerPool->wait();
+            $worker->launch();
+        } catch (\Exception $e) {
+            $worker->shutdown();
+            throw $e;
         }
 
         $result = new ConsoleModel();
@@ -71,25 +82,6 @@ class Proletarier extends AbstractConsoleController
         $client->trigger($event, $params);
     }
 
-    public function runWorkerAction()
-    {
-        $this->initEvents();
-
-        /* @var $worker \Proletarier\Worker\Worker */
-        $worker = $this->getServiceLocator()->get('Proletarier\Worker');
-
-        try {
-            $worker->launch();
-        } finally {
-            $worker->shutdown();
-        }
-
-        $result = new ConsoleModel();
-        $result->setErrorLevel(0);
-
-        return $result;
-    }
-
     /**
      * Initialize some important events before running
      *
@@ -104,8 +96,8 @@ class Proletarier extends AbstractConsoleController
         $logger = $serviceManager->get('Proletarier\Log');
         $eventManager->attach(new InternalEventLogger($logger));
         $eventManager->attach(new ProcessNameModifier([
-            'workerpool.launch' => 'Proletarier master',
-            'worker.launch'     => 'Proletarier worker'
+            'broker.bind.pre' => 'Proletarier broker',
+            'worker.launch'   => 'Proletarier worker'
         ]));
     }
 }

@@ -128,21 +128,18 @@ class Broker implements EventManagerAwareInterface
         }
 
         $this->getEventManager()->trigger('broker.run.pre', $this);
-
-        $this->hookShutdownSignals();
         $this->getEventManager()->trigger('broker.run', $this);
 
         try {
             // This blocks until interrupted
             $this->device->run();
         } catch (ZMQDeviceException $e) {
-            if ($e->getCode() == 4) {
-                // Interrupt
-                $this->getEventManager()->trigger('broker.run.post', $this);
-            } else {
+            if ($e->getCode() != 4) {
                 throw $e;
             }
         }
+
+        $this->getEventManager()->trigger('broker.run.post', $this);
     }
 
     /**
@@ -154,19 +151,5 @@ class Broker implements EventManagerAwareInterface
     public function idle()
     {
         $this->getEventManager()->trigger('broker.idle', $this);
-    }
-
-    /**
-     * Hook posix shutdown signal handlers
-     *
-     */
-    protected function hookShutdownSignals()
-    {
-        $terminate = function ($signal) {
-            $this->getEventManager()->trigger('broker.signal', $this, array('signal' => $signal));
-        };
-
-        pcntl_signal(SIGTERM, $terminate);
-        pcntl_signal(SIGINT, $terminate);
     }
 }

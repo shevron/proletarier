@@ -19,8 +19,7 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
     {
         $config = require __DIR__ . '/config/module.config.php';
         if (! $config['proletarier']['worker']['bind']) {
-            $config['proletarier']['worker']['bind'] = 'ipc://' . sys_get_temp_dir() . '/proletarier_ipc_' .
-                md5(microtime() . rand(0, PHP_INT_MAX)) . '.sock';
+            $config['proletarier']['worker']['bind'] = 'ipc://' . sys_get_temp_dir() . '/proletarier_ipc.sock';
         }
 
         return $config;
@@ -70,8 +69,10 @@ class Module implements AutoloaderProviderInterface, ConsoleUsageProviderInterfa
     public function getConsoleUsage(AdapterInterface $console)
     {
         return array(
-            'proletarier run' =>
-                'Run the Proletarier message broker',
+            'proletarier broker' =>
+                'Run the proletarier message broker',
+            'proletarier worker' =>
+                'Run a Proletarier worker process',
             'proletarier trigger <event> [<params>]' =>
                 'Trigger an event, with optional parameters as a JSON-seiralized string'
         );
