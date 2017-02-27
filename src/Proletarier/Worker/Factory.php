@@ -68,8 +68,8 @@ class Factory
             if (is_array($listenerSpec)) {
                 $event = $listenerSpec[0];
                 $callback = $listenerSpec[1];
-                if (isset($listenerSpec[3])) {
-                    $priority = $listenerSpec[3];
+                if (isset($listenerSpec[2])) {
+                    $priority = $listenerSpec[2];
                 } else {
                     $priority = 1;
                 }
